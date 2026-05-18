@@ -3,10 +3,11 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store/authStore';
 import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
+import { AdminNavigator } from './AdminNavigator';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
 
 export const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading, restoreToken } = useAuthStore();
+  const { isAuthenticated, isLoading, restoreToken, role } = useAuthStore();
 
   useEffect(() => {
     restoreToken();
@@ -18,7 +19,7 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
+      {isAuthenticated ? role === 'EMPLOYEE' ? <AdminNavigator /> : <MainNavigator /> : <AuthNavigator />}
     </NavigationContainer>
   );
 };

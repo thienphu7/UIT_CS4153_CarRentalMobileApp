@@ -7,8 +7,6 @@ interface CarState {
   filters: QueryCarsParams;
   isLoading: boolean;
   error: string | null;
-
-  // Actions
   fetchCars: (params?: QueryCarsParams) => Promise<void>;
   fetchCarById: (id: string) => Promise<void>;
   setFilters: (filters: QueryCarsParams) => void;
@@ -22,16 +20,18 @@ export const useCarStore = create<CarState>((set, get) => ({
   isLoading: false,
   error: null,
 
+  // GET /cars with optional filters from QueryCarDto.
   fetchCars: async (params?: QueryCarsParams) => {
     set({ isLoading: true, error: null });
     try {
-      const { data } = await carApi.fetchCars(params ?? get().filters);
+      const data = await carApi.fetchCars(params ?? get().filters);
       set({ cars: data, isLoading: false });
     } catch (e: any) {
       set({ error: e?.message || 'Không thể tải danh sách xe', isLoading: false });
     }
   },
 
+  // GET /cars/:id and keep a single selected car for detail/booking screens.
   fetchCarById: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
@@ -42,11 +42,6 @@ export const useCarStore = create<CarState>((set, get) => ({
     }
   },
 
-  setFilters: (filters: QueryCarsParams) => {
-    set({ filters });
-  },
-
-  clearFilters: () => {
-    set({ filters: {} });
-  },
+  setFilters: (filters: QueryCarsParams) => set({ filters }),
+  clearFilters: () => set({ filters: {} }),
 }));
