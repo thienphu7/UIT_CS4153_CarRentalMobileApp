@@ -46,17 +46,18 @@ export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, ro
 
   const car = selectedCar;
   const isAvailable = car.status === 'AVAILABLE';
-  const placeholder = 'https://via.placeholder.com/780x400/efecff/3563e9?text=Car+Image';
 
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Image */}
-        <Image
-          source={{ uri: car.imagePath || placeholder }}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
+        {car.imagePath ? (
+          <Image source={{ uri: car.imagePath }} style={styles.heroImage} resizeMode="cover" />
+        ) : (
+          <View style={[styles.heroImage, styles.heroFallback]}>
+            <Ionicons name="car-sport-outline" size={64} color={Colors.primaryContainer} />
+          </View>
+        )}
 
         {/* Main Info */}
         <View style={styles.content}>
@@ -123,6 +124,7 @@ export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, ro
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   heroImage: { width: '100%', height: 260 },
+  heroFallback: { backgroundColor: Colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
   content: { paddingHorizontal: Spacing.containerPadding, paddingTop: 20 },
   titleRow: {
     flexDirection: 'row',
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
   },
   priceBlock: { alignItems: 'flex-end' },
   price: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   bottomPriceValue: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },

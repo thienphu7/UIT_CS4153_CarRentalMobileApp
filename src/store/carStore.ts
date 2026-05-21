@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { carApi, Car, QueryCarsParams } from '../api/car.api';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface CarState {
   cars: Car[];
@@ -26,8 +27,8 @@ export const useCarStore = create<CarState>((set, get) => ({
     try {
       const data = await carApi.fetchCars(params ?? get().filters);
       set({ cars: data, isLoading: false });
-    } catch (e: any) {
-      set({ error: e?.message || 'Không thể tải danh sách xe', isLoading: false });
+    } catch (error) {
+      set({ error: getApiErrorMessage(error, 'Không thể tải danh sách xe'), isLoading: false });
     }
   },
 
@@ -37,8 +38,8 @@ export const useCarStore = create<CarState>((set, get) => ({
     try {
       const { data } = await carApi.fetchCarById(id);
       set({ selectedCar: data, isLoading: false });
-    } catch (e: any) {
-      set({ error: e?.message || 'Không thể tải thông tin xe', isLoading: false });
+    } catch (error) {
+      set({ error: getApiErrorMessage(error, 'Không thể tải thông tin xe'), isLoading: false });
     }
   },
 

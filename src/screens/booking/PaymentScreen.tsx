@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
   },
   carPrice: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
   },
   totalValue: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   totalPreviewValue: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },
