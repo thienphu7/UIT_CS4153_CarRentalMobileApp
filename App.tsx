@@ -11,6 +11,7 @@ import {
 import { View, ActivityIndicator } from 'react-native';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { Colors } from './src/theme/colors';
+import { ToastProvider } from './src/components/common/Toast';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -31,7 +32,9 @@ export default function App() {
   return (
     <>
       <StatusBar style="auto" />
-      <AppNavigator />
+      <ToastProvider>
+        <AppNavigator />
+      </ToastProvider>
     </>
   );
 }

@@ -2,6 +2,9 @@ node_modules/
 .expo/
 dist/
 web-build/
+coverage/
+.turbo/
+.cache/
 .env
 .env.local
 .env.*.local
@@ -16,3 +19,9 @@ ios/
 .DS_Store
 npm-debug.*
 *.jsa
+.claude/
+CLAUDE.md
+*.log
+tmp/
+temp/
+.expo-codex.log

@@ -1,16 +1,14 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
-
-// Android emulator uses 10.0.2.2 to reach the host machine.
-// iOS simulator and web can call localhost directly.
-const BASE_URL =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api/v1'
-    : 'http://localhost:5000/api/v1';
+import { Env } from '../config/env';
+import { STORAGE_KEYS } from '../constants/storage';
+import { notifyAuthExpired } from '../store/authEvents';
 
 export interface PaginatedResponse<T> {
   data: T[];
+  page?: number;
+  total?: number;
+  totalPage?: number;
   meta?: {
     total?: number;
     page?: number;
@@ -25,14 +23,14 @@ export const unwrapCollection = <T>(payload: T[] | PaginatedResponse<T>): T[] =>
   Array.isArray(payload) ? payload : payload.data ?? [];
 
 export const apiClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: Env.apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
 });
 
 apiClient.interceptors.request.use(
   async (config) => {
-    const token = await SecureStore.getItemAsync('accessToken');
+    const token = await SecureStore.getItemAsync(STORAGE_KEYS.accessToken);
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
@@ -43,10 +41,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Clear local auth state; AppNavigator reacts on next store restore/login.
-      await SecureStore.deleteItemAsync('accessToken');
-      await SecureStore.deleteItemAsync('userEmail');
-      await SecureStore.deleteItemAsync('userRole');
+      await Promise.all([
+        SecureStore.deleteItemAsync(STORAGE_KEYS.accessToken),
+        SecureStore.deleteItemAsync(STORAGE_KEYS.userEmail),
+        SecureStore.deleteItemAsync(STORAGE_KEYS.userRole),
+      ]);
+      notifyAuthExpired();
     }
     return Promise.reject(error);
   }

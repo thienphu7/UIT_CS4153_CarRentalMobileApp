@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { authApi, decodeJwtPayload, LoginPayload, RegisterPayload, UserRole } from '../api/auth.api';
+import {
+  authApi,
+  decodeJwtPayload,
+  isJwtExpired,
+  LoginPayload,
+  RegisterPayload,
+  UserRole,
+} from '../api/auth.api';
+import { STORAGE_KEYS } from '../constants/storage';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface AuthState {
   token: string | null;
@@ -16,6 +25,14 @@ interface AuthState {
   clearError: () => void;
 }
 
+const clearAuthStorage = async () => {
+  await Promise.all([
+    SecureStore.deleteItemAsync(STORAGE_KEYS.accessToken),
+    SecureStore.deleteItemAsync(STORAGE_KEYS.userEmail),
+    SecureStore.deleteItemAsync(STORAGE_KEYS.userRole),
+  ]);
+};
+
 export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   email: null,
@@ -24,13 +41,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: false,
   error: null,
 
-  // Restore persisted login so the app can open directly into the right role.
+  // Restore persisted login and drop expired JWTs before navigation renders.
   restoreToken: async () => {
     try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      const email = await SecureStore.getItemAsync('userEmail');
-      const role = (await SecureStore.getItemAsync('userRole')) as UserRole | null;
-      if (token) set({ token, email, role, isAuthenticated: true });
+      const token = await SecureStore.getItemAsync(STORAGE_KEYS.accessToken);
+      const email = await SecureStore.getItemAsync(STORAGE_KEYS.userEmail);
+      const role = (await SecureStore.getItemAsync(STORAGE_KEYS.userRole)) as UserRole | null;
+
+      if (token && isJwtExpired(token)) {
+        await clearAuthStorage();
+        set({ token: null, email: null, role: null, isAuthenticated: false });
+        return;
+      }
+
+      if (token) {
+        set({ token, email, role, isAuthenticated: true });
+      }
     } catch {
       set({ token: null, email: null, role: null, isAuthenticated: false });
     }
@@ -43,9 +69,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { data } = await authApi.login(payload);
       const jwtPayload = decodeJwtPayload(data.accessToken);
       const role = jwtPayload?.role ?? 'CUSTOMER';
-      await SecureStore.setItemAsync('accessToken', data.accessToken);
-      await SecureStore.setItemAsync('userEmail', data.email);
-      await SecureStore.setItemAsync('userRole', role);
+
+      await Promise.all([
+        SecureStore.setItemAsync(STORAGE_KEYS.accessToken, data.accessToken),
+        SecureStore.setItemAsync(STORAGE_KEYS.userEmail, data.email),
+        SecureStore.setItemAsync(STORAGE_KEYS.userRole, role),
+      ]);
+
       set({
         token: data.accessToken,
         email: data.email,
@@ -53,10 +83,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         isAuthenticated: true,
         isLoading: false,
       });
-    } catch (e: any) {
-      const message = e?.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-      set({ error: message, isLoading: false });
-      throw e;
+    } catch (error) {
+      set({
+        error: getApiErrorMessage(error, 'Đăng nhập thất bại. Vui lòng thử lại.'),
+        isLoading: false,
+      });
+      throw error;
     }
   },
 
@@ -66,17 +98,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await authApi.register(payload);
       set({ isLoading: false });
-    } catch (e: any) {
-      const message = e?.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
-      set({ error: message, isLoading: false });
-      throw e;
+    } catch (error) {
+      set({
+        error: getApiErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.'),
+        isLoading: false,
+      });
+      throw error;
     }
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('accessToken');
-    await SecureStore.deleteItemAsync('userEmail');
-    await SecureStore.deleteItemAsync('userRole');
+    await clearAuthStorage();
     set({ token: null, email: null, role: null, isAuthenticated: false });
   },
 

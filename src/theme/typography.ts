@@ -10,6 +10,8 @@ export const FontFamilies = {
   sansSemiBold: 'DMSans_600SemiBold',
   sansMedium: 'DMSans_600SemiBold', // alias
   sansRegular: 'DMSans_400Regular',
+  numericBold: 'DMSans_700Bold',
+  numericSemiBold: 'DMSans_600SemiBold',
 };
 
 export const FontSizes = {

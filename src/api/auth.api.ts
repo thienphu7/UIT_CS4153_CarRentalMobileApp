@@ -58,6 +58,12 @@ export const decodeJwtPayload = (token: string): JwtPayload | null => {
   }
 };
 
+export const isJwtExpired = (token: string) => {
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return false;
+  return payload.exp * 1000 <= Date.now();
+};
+
 export const authApi = {
   /** POST /auth/login - public endpoint returning the JWT access token. */
   login: (data: LoginPayload) => apiClient.post<LoginResponse>('/auth/login', data),
