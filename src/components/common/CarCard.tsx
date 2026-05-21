@@ -21,8 +21,6 @@ interface CarCardProps {
 
 export const CarCard: React.FC<CarCardProps> = ({ car, onPress, horizontal = false }) => {
   const isAvailable = car.status === 'AVAILABLE';
-  const placeholderImage =
-    'https://via.placeholder.com/390x200/efecff/3563e9?text=No+Image';
 
   if (horizontal) {
     return (
@@ -31,11 +29,13 @@ export const CarCard: React.FC<CarCardProps> = ({ car, onPress, horizontal = fal
         onPress={() => onPress(car)}
         activeOpacity={0.9}
       >
-        <Image
-          source={{ uri: car.imagePath || placeholderImage }}
-          style={styles.imageHorizontal}
-          resizeMode="cover"
-        />
+        {car.imagePath ? (
+          <Image source={{ uri: car.imagePath }} style={styles.imageHorizontal} resizeMode="cover" />
+        ) : (
+          <View style={[styles.imageHorizontal, styles.imageFallback]}>
+            <Ionicons name="car-sport-outline" size={26} color={Colors.primaryContainer} />
+          </View>
+        )}
         <View style={styles.infoHorizontal}>
           <Text style={styles.brand} numberOfLines={1}>
             {car.brand}
@@ -64,11 +64,13 @@ export const CarCard: React.FC<CarCardProps> = ({ car, onPress, horizontal = fal
       onPress={() => onPress(car)}
       activeOpacity={0.9}
     >
-      <Image
-        source={{ uri: car.imagePath || placeholderImage }}
-        style={styles.image}
-        resizeMode="cover"
-      />
+      {car.imagePath ? (
+        <Image source={{ uri: car.imagePath }} style={styles.image} resizeMode="cover" />
+      ) : (
+        <View style={[styles.image, styles.imageFallback]}>
+          <Ionicons name="car-sport-outline" size={42} color={Colors.primaryContainer} />
+        </View>
+      )}
       <View style={styles.info}>
         <View style={styles.titleRow}>
           <View style={styles.titleLeft}>
@@ -115,6 +117,11 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
   },
+  imageFallback: {
+    backgroundColor: Colors.surfaceContainerHigh,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   info: {
     padding: 14,
   },
@@ -137,7 +144,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   price: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },
