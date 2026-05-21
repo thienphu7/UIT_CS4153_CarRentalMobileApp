@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurface,
   },
   count: {
-    fontFamily: FontFamilies.sansRegular,
+    fontFamily: FontFamilies.numericSemiBold,
     fontSize: FontSizes.bodyMain,
     color: Colors.onSurfaceVariant,
   },

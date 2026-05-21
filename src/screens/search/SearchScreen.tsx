@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
   ScrollView,
   StyleSheet,
+  Text,
+  TextInput,
   TouchableOpacity,
+  View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { carApi, Car, QueryCarsParams } from '../../api/car.api';
 import { CarCard } from '../../components/common/CarCard';
-import { LoadingOverlay } from '../../components/common/LoadingOverlay';
+import { ScreenState } from '../../components/common/ScreenState';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
-import { Spacing, Radius, Heights } from '../../theme/spacing';
-import { Ionicons } from '@expo/vector-icons';
+import { Heights, Radius, Spacing } from '../../theme/spacing';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type SearchScreenProps = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'HomeTabs'>;
@@ -23,65 +24,66 @@ type SearchScreenProps = {
 
 const SORT_OPTIONS = [
   { label: 'Mới nhất', value: 'createdAt' },
-  { label: 'Giá tăng', value: 'pricePerDay_asc' },
-  { label: 'Giá giảm', value: 'pricePerDay_desc' },
-];
+  { label: 'Giá tăng', value: 'price_asc' },
+  { label: 'Giá giảm', value: 'price_desc' },
+] as const;
+
+type SortValue = (typeof SORT_OPTIONS)[number]['value'];
 
 export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   const [searchText, setSearchText] = useState('');
   const [cars, setCars] = useState<Car[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [selectedSort, setSelectedSort] = useState('createdAt');
+  const [selectedSort, setSelectedSort] = useState<SortValue>('createdAt');
+  const [error, setError] = useState<string | null>(null);
+
+  const sortCars = (data: Car[]) => {
+    if (selectedSort === 'price_asc') return [...data].sort((a, b) => a.pricePerHour - b.pricePerHour);
+    if (selectedSort === 'price_desc') return [...data].sort((a, b) => b.pricePerHour - a.pricePerHour);
+    return [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  };
 
   const handleSearch = async () => {
-    if (!searchText.trim() && !hasSearched) return;
     setIsLoading(true);
     setHasSearched(true);
+    setError(null);
 
-    const params: QueryCarsParams = {};
+    const params: QueryCarsParams = {
+      carStatus: 'AVAILABLE',
+      limit: 100,
+    };
+
     const text = searchText.trim();
-    if (text) {
-      // Try to match brand or carType
-      params.brand = text;
-    }
-
-    if (selectedSort === 'pricePerDay_asc') {
-      params.sortBy = 'pricePerDay';
-      params.sortOrder = 'asc';
-    } else if (selectedSort === 'pricePerDay_desc') {
-      params.sortBy = 'pricePerDay';
-      params.sortOrder = 'desc';
-    } else {
-      params.sortBy = 'createdAt';
-      params.sortOrder = 'desc';
-    }
-    params.carStatus = 'AVAILABLE';
+    if (text) params.search = text;
 
     try {
       const data = await carApi.fetchCars(params);
-      setCars(data);
-    } catch {
+      setCars(sortCars(data));
+    } catch (err) {
       setCars([]);
+      setError(getApiErrorMessage(err, 'Không thể tìm kiếm xe.'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCarPress = (car: Car) => {
-    navigation.navigate('CarDetail', { carId: car.id });
+  const clearSearch = () => {
+    setSearchText('');
+    setCars([]);
+    setHasSearched(false);
+    setError(null);
   };
 
   return (
     <View style={styles.container}>
-      {/* Search Bar */}
       <View style={styles.searchHeader}>
         <Text style={styles.title}>Tìm kiếm xe</Text>
         <View style={styles.searchBar}>
           <Ionicons name="search-outline" size={20} color={Colors.outline} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Tìm theo hãng xe, loại xe..."
+            placeholder="Tìm theo hãng xe, mẫu xe..."
             placeholderTextColor={Colors.outline}
             value={searchText}
             onChangeText={setSearchText}
@@ -89,19 +91,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
             returnKeyType="search"
           />
           {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => { setSearchText(''); setCars([]); setHasSearched(false); }}>
+            <TouchableOpacity onPress={clearSearch}>
               <Ionicons name="close-circle" size={18} color={Colors.outline} />
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Sort Options */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortRow}>
           {SORT_OPTIONS.map((opt) => (
             <TouchableOpacity
               key={opt.value}
               style={[styles.sortChip, selectedSort === opt.value && styles.sortChipActive]}
-              onPress={() => { setSelectedSort(opt.value); }}
+              onPress={() => setSelectedSort(opt.value)}
             >
               <Text style={[styles.sortChipText, selectedSort === opt.value && styles.sortChipTextActive]}>
                 {opt.label}
@@ -110,34 +111,22 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
           ))}
         </ScrollView>
 
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch} activeOpacity={0.86}>
           <Text style={styles.searchButtonText}>Tìm kiếm</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Results */}
-      <ScrollView
-        style={styles.results}
-        contentContainerStyle={styles.resultsContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {isLoading && <LoadingOverlay />}
-        {!isLoading && hasSearched && cars.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="car-outline" size={64} color={Colors.outlineVariant} />
-            <Text style={styles.emptyTitle}>Không tìm thấy xe</Text>
-            <Text style={styles.emptySubtitle}>Thử tìm với từ khoá khác</Text>
-          </View>
+      <ScrollView style={styles.results} contentContainerStyle={styles.resultsContent} showsVerticalScrollIndicator={false}>
+        {isLoading && <ScreenState type="loading" message="Đang tìm xe phù hợp..." />}
+        {!isLoading && error && <ScreenState type="error" title="Tìm kiếm thất bại" message={error} actionLabel="Thử lại" onAction={handleSearch} />}
+        {!isLoading && !error && hasSearched && cars.length === 0 && (
+          <ScreenState type="empty" icon="car-outline" title="Không tìm thấy xe" message="Thử tìm với từ khóa khác." />
         )}
-        {!isLoading && !hasSearched && (
-          <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={64} color={Colors.outlineVariant} />
-            <Text style={styles.emptyTitle}>Tìm xe phù hợp</Text>
-            <Text style={styles.emptySubtitle}>Nhập tên hãng xe hoặc loại xe để bắt đầu</Text>
-          </View>
+        {!isLoading && !error && !hasSearched && (
+          <ScreenState type="empty" icon="search-outline" title="Tìm xe phù hợp" message="Nhập hãng xe hoặc mẫu xe để bắt đầu." />
         )}
-        {cars.map((car) => (
-          <CarCard key={car.id} car={car} onPress={handleCarPress} />
+        {!isLoading && !error && cars.map((car) => (
+          <CarCard key={car.id} car={car} onPress={(item) => navigation.navigate('CarDetail', { carId: item.id })} />
         ))}
       </ScrollView>
     </View>
@@ -211,21 +200,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.containerPadding,
     paddingTop: Spacing.stackMd,
     paddingBottom: 32,
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingTop: 80,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontFamily: FontFamilies.sansSemiBold,
-    fontSize: FontSizes.h2Semibold,
-    color: Colors.onSurface,
-  },
-  emptySubtitle: {
-    fontFamily: FontFamilies.sansRegular,
-    fontSize: FontSizes.bodyMain,
-    color: Colors.onSurfaceVariant,
-    textAlign: 'center',
   },
 });

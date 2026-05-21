@@ -1,24 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Rental, RentalStatus } from '../../api/rental.api';
+import { Rental } from '../../api/rental.api';
+import { RENTAL_STATUS_CONFIG } from '../../constants/rentalStatus';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Radius, Spacing, Shadow } from '../../theme/spacing';
 import { formatDateTimeVN } from '../../utils/dateUtils';
 import { formatVND } from '../../utils/formatCurrency';
-
-const STATUS_CONFIG: Record<
-  RentalStatus,
-  { label: string; color: string; bg: string; icon: string }
-> = {
-  PENDING: { label: 'Chờ xác nhận', color: '#b45309', bg: '#fef3c7', icon: 'time-outline' },
-  ACTIVE: { label: 'Đang thuê', color: '#065f46', bg: '#d1fae5', icon: 'car-sport-outline' },
-  APPROVED: { label: 'Đã duyệt', color: Colors.primary, bg: Colors.primaryFixed, icon: 'checkmark-circle-outline' },
-  REJECTED: { label: 'Bị từ chối', color: Colors.error, bg: Colors.errorContainer, icon: 'close-circle-outline' },
-  COMPLETED: { label: 'Hoàn thành', color: '#374151', bg: Colors.surfaceContainerHighest, icon: 'flag-outline' },
-  CANCELLED: { label: 'Đã hủy', color: Colors.error, bg: Colors.errorContainer, icon: 'ban-outline' },
-};
+import { getRentalAmount, getRentalRouteText } from '../../utils/rentalUtils';
+import { StatusBadge } from './StatusBadge';
 
 interface RentalCardProps {
   rental: Rental;
@@ -26,47 +17,27 @@ interface RentalCardProps {
 }
 
 export const RentalCard: React.FC<RentalCardProps> = ({ rental, onPress }) => {
-  const config = STATUS_CONFIG[rental.rentalStatus] ?? STATUS_CONFIG.PENDING;
+  const config = RENTAL_STATUS_CONFIG[rental.rentalStatus] ?? RENTAL_STATUS_CONFIG.PENDING;
 
   return (
-    <View
+    <TouchableOpacity
       style={[styles.card, Shadow.card]}
+      onPress={() => onPress?.(rental)}
+      activeOpacity={onPress ? 0.86 : 1}
+      disabled={!onPress}
     >
-      {/* Status Badge */}
-      <View style={[styles.statusBadge, { backgroundColor: config.bg }]}>
-        <Ionicons name={config.icon as any} size={14} color={config.color} />
-        <Text style={[styles.statusText, { color: config.color }]}>
-          {config.label}
-        </Text>
-      </View>
+      <StatusBadge {...config} />
 
-      {/* Rental Info */}
       <View style={styles.row}>
         <Ionicons name="location-outline" size={16} color={Colors.onSurfaceVariant} />
-        <View style={styles.locationInfo}>
-          <Text style={styles.locationLabel}>Đón:</Text>
-          <Text style={styles.locationValue} numberOfLines={1}>
-            {rental.pickUpLocation}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.row}>
-        <Ionicons name="flag-outline" size={16} color={Colors.onSurfaceVariant} />
-        <View style={styles.locationInfo}>
-          <Text style={styles.locationLabel}>Trả:</Text>
-          <Text style={styles.locationValue} numberOfLines={1}>
-            {rental.dropOffLocation}
-          </Text>
-        </View>
+        <Text style={styles.locationValue} numberOfLines={1}>{getRentalRouteText(rental)}</Text>
       </View>
 
       <View style={styles.divider} />
 
-      {/* Time */}
       <View style={styles.timeRow}>
         <View style={styles.timeBlock}>
-          <Text style={styles.timeLabel}>Ngày đón</Text>
+          <Text style={styles.timeLabel}>Ngày nhận</Text>
           <Text style={styles.timeValue}>{formatDateTimeVN(rental.pickUpAt)}</Text>
         </View>
         <Ionicons name="arrow-forward" size={16} color={Colors.outline} />
@@ -78,12 +49,11 @@ export const RentalCard: React.FC<RentalCardProps> = ({ rental, onPress }) => {
 
       <View style={styles.divider} />
 
-      {/* Total */}
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Tổng tiền</Text>
-        <Text style={styles.totalAmount}>{formatVND(rental.totalAmount)}</Text>
+        <Text style={styles.totalAmount}>{formatVND(getRentalAmount(rental))}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -94,36 +64,11 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: Spacing.stackMd,
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    borderRadius: Radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 12,
-    gap: 4,
-  },
-  statusText: {
-    fontFamily: FontFamilies.sansSemiBold,
-    fontSize: FontSizes.labelSm,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 6,
-  },
-  locationInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  locationLabel: {
-    fontFamily: FontFamilies.sansSemiBold,
-    fontSize: FontSizes.labelSm,
-    color: Colors.onSurfaceVariant,
+    marginTop: 12,
   },
   locationValue: {
     flex: 1,
@@ -140,6 +85,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   timeBlock: { flex: 1 },
   timeLabel: {
@@ -164,7 +110,7 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   totalAmount: {
-    fontFamily: FontFamilies.displayBold,
+    fontFamily: FontFamilies.numericBold,
     fontSize: FontSizes.priceDisplay,
     color: Colors.primaryContainer,
   },

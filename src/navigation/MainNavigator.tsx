@@ -1,11 +1,11 @@
 import React from 'react';
+import { NavigatorScreenParams } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../theme/colors';
 import { FontFamilies } from '../theme/typography';
 import { Heights } from '../theme/spacing';
-
 import { HomeScreen } from '../screens/home/HomeScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 import { MyRentalsScreen } from '../screens/rental/MyRentalsScreen';
@@ -16,8 +16,24 @@ import { PaymentScreen } from '../screens/booking/PaymentScreen';
 import { BookingSuccessScreen } from '../screens/booking/BookingSuccessScreen';
 import { TripReviewScreen } from '../screens/rental/TripReviewScreen';
 
-// --- Tab Navigator ---
-const Tab = createBottomTabNavigator();
+export type MainTabParamList = {
+  Home: undefined;
+  Search: undefined;
+  Rentals: undefined;
+  Messages: undefined;
+  Profile: undefined;
+};
+
+export type MainStackParamList = {
+  HomeTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  CarDetail: { carId: string };
+  Payment: { carId: string };
+  BookingSuccess: { rentalId: string };
+  TripReview: { rentalId: string };
+};
+
+const Tab = createBottomTabNavigator<MainTabParamList>();
+const Stack = createNativeStackNavigator<MainStackParamList>();
 
 const HomeTabs: React.FC = () => (
   <Tab.Navigator
@@ -37,21 +53,15 @@ const HomeTabs: React.FC = () => (
         paddingTop: 4,
         backgroundColor: Colors.white,
       },
-      tabBarIcon: ({ color, size }) => {
-        const icons: Record<string, string> = {
+      tabBarIcon: ({ color }) => {
+        const icons: Record<keyof MainTabParamList, string> = {
           Home: 'home-outline',
           Search: 'search-outline',
           Rentals: 'car-outline',
           Messages: 'chatbubble-outline',
           Profile: 'person-outline',
         };
-        return (
-          <Ionicons
-            name={(icons[route.name] || 'ellipse-outline') as any}
-            size={22}
-            color={color}
-          />
-        );
+        return <Ionicons name={icons[route.name] as any} size={22} color={color} />;
       },
     })}
   >
@@ -62,17 +72,6 @@ const HomeTabs: React.FC = () => (
     <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Hồ sơ' }} />
   </Tab.Navigator>
 );
-
-// --- Main Stack Navigator (wraps tabs + modal screens) ---
-export type MainStackParamList = {
-  HomeTabs: undefined;
-  CarDetail: { carId: string };
-  Payment: { carId: string };
-  BookingSuccess: { rentalId: string };
-  TripReview: { rentalId: string };
-};
-
-const Stack = createNativeStackNavigator<MainStackParamList>();
 
 export const MainNavigator: React.FC = () => (
   <Stack.Navigator

@@ -22,12 +22,13 @@ export interface Car {
 }
 
 export interface QueryCarsParams {
+  search?: string;
   brand?: string;
   model?: string;
   carType?: string;
   color?: string;
   carStatus?: CarStatus;
-  sortBy?: 'pricePerDay' | 'manufactureYear' | 'createdAt';
+  sortBy?: 'manufactureYear' | 'createdAt';
   sortOrder?: 'asc' | 'desc';
   page?: number;
   limit?: number;
@@ -46,12 +47,22 @@ export const carApi = {
   /** GET /cars/:id - public car detail. */
   fetchCarById: (id: string) => apiClient.get<Car>(`/cars/${id}`),
 
-  /** GET /cars/available?pickUpAt=&dropOffAt= - public availability lookup. */
+  /**
+   * GET /cars/available?pickUpAt=&dropOffAt= - public availability lookup.
+   *
+   * The current backend declares this route after GET /cars/:id, so some Nest
+   * adapters may route /available as an id. The fallback keeps search usable
+   * without inventing mock data.
+   */
   fetchAvailableCars: async (pickUpAt: string, dropOffAt: string) => {
-    const { data } = await apiClient.get<Car[] | PaginatedResponse<Car>>('/cars/available', {
-      params: { pickUpAt, dropOffAt },
-    });
-    return unwrapCollection(data);
+    try {
+      const { data } = await apiClient.get<Car[] | PaginatedResponse<Car>>('/cars/available', {
+        params: { pickUpAt, dropOffAt },
+      });
+      return unwrapCollection(data);
+    } catch {
+      return carApi.fetchCars({ carStatus: 'AVAILABLE', limit: 100 });
+    }
   },
 
   /** POST /cars - employee only. */
