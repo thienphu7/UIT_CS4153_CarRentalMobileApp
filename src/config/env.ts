@@ -1,24 +1,27 @@
-import { Platform } from 'react-native';
-
 declare const process: {
   env?: {
     EXPO_PUBLIC_API_URL?: string;
   };
 };
 
-const defaultApiUrl =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api/v1'
-    : 'http://localhost:5000/api/v1';
+const requireEnv = (key: 'EXPO_PUBLIC_API_URL') => {
+  const value = process.env?.[key]?.trim();
+
+  if (!value) {
+    throw new Error(
+      `Missing ${key}. Create a .env file in UIT_CS4153_CarRentalMobileApp and set ${key}.`
+    );
+  }
+
+  return value.replace(/\/+$/, '');
+};
 
 /**
  * Central runtime configuration for the mobile client.
  *
- * Expo exposes public env vars through the EXPO_PUBLIC_* prefix. Keeping the
- * fallback here preserves the current local backend setup while allowing CI,
- * staging, and production builds to point at different API hosts without code
- * changes.
+ * Expo exposes public env vars through the EXPO_PUBLIC_* prefix. Keep
+ * machine-specific values in .env, which is intentionally gitignored.
  */
 export const Env = {
-  apiBaseUrl: process.env?.EXPO_PUBLIC_API_URL?.trim() || defaultApiUrl,
+  apiBaseUrl: requireEnv('EXPO_PUBLIC_API_URL'),
 };
