@@ -191,8 +191,9 @@ const CustomerDetailModal = ({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   list: {
-    padding: Spacing.containerPadding,
-    paddingBottom: 40,
+    paddingHorizontal: Spacing.containerPadding,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding * 2,
     gap: Spacing.stackMd,
   },
   notice: {
@@ -250,8 +251,8 @@ const styles = StyleSheet.create({
   modal: { flex: 1, backgroundColor: Colors.background },
   modalContent: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 58,
-    paddingBottom: 40,
+    paddingTop: Spacing.containerVerticalPadding * 3,
+    paddingBottom: Spacing.containerVerticalPadding * 2,
   },
   modalHeader: {
     flexDirection: 'row',

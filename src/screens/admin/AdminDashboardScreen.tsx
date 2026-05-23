@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingBottom: 96,
+    paddingBottom: Spacing.containerVerticalPadding + 76,
     gap: Spacing.gridGutter,
   },
   metricRow: { gap: Spacing.gridGutter, marginBottom: Spacing.gridGutter },

@@ -151,8 +151,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   header: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 60,
-    paddingBottom: 12,
+    paddingTop: Spacing.containerVerticalPadding * 2,
+    paddingBottom: Spacing.containerVerticalPadding / 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -213,12 +213,12 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: Spacing.stackMd,
-    paddingBottom: 32,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
   },
   emptyState: {
     alignItems: 'center',
-    paddingTop: 80,
+    paddingTop: Spacing.containerVerticalPadding * 4,
     gap: 12,
   },
   emptyTitle: {

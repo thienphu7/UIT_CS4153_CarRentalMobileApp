@@ -191,8 +191,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   scroll: { flex: 1 },
   content: {
-    padding: Spacing.containerPadding,
-    paddingBottom: 176,
+    paddingHorizontal: Spacing.containerPadding,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding + 156,
   },
   headerCard: {
     backgroundColor: Colors.white,
@@ -285,8 +286,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 14,
-    paddingBottom: 24,
+    paddingTop: Spacing.containerVerticalPadding / 2,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.xs,
     backgroundColor: Colors.white,
     borderTopWidth: 1,
     borderTopColor: Colors.outlineVariant,

@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: Spacing.stackMd,
-    paddingBottom: 110,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding + 90,
   },
   summaryCard: {
     backgroundColor: Colors.white,
@@ -240,8 +240,8 @@ const styles = StyleSheet.create({
   bottomBar: {
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 16,
-    paddingBottom: 32,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
     borderTopWidth: 1,
     borderTopColor: Colors.outlineVariant,
   },

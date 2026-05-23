@@ -219,11 +219,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingBottom: 32 },
+  content: { paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd },
   header: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 38,
-    paddingBottom: 12,
+    paddingTop: Spacing.containerVerticalPadding * 2,
+    paddingBottom: Spacing.containerVerticalPadding / 2,
   },
   topBar: {
     flexDirection: 'row',
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   featuredList: {
     paddingLeft: Spacing.containerPadding,
     paddingRight: Spacing.containerPadding,
-    paddingBottom: 12,
+    paddingBottom: Spacing.containerVerticalPadding / 2,
   },
   filterScroll: { paddingLeft: Spacing.containerPadding, marginBottom: Spacing.stackMd },
   filterChip: {

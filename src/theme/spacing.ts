@@ -3,6 +3,7 @@
 
 export const Spacing = {
   containerPadding: 20, // Horizontal screen margins
+  containerVerticalPadding: 30, // Vertical screen margins
   sectionMargin: 32,    // Between major content sections
   stackLg: 24,          // Large vertical gap
   stackMd: 16,          // Medium vertical gap
@@ -59,6 +60,6 @@ export const Shadow = {
 export const Heights = {
   button: 52,       // Primary & secondary buttons
   input: 52,        // Standard input fields
-  bottomNav: 64,    // Bottom navigation bar
+  bottomNav: 75,    // Bottom navigation bar
   carCard: 200,     // Car image area height
 };

@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   list: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingBottom: 96,
+    paddingBottom: Spacing.containerVerticalPadding + 76,
   },
   filters: {
     gap: 8,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 58,
+    paddingTop: Spacing.containerVerticalPadding * 3,
   },
   modalHeader: {
     flexDirection: 'row',
