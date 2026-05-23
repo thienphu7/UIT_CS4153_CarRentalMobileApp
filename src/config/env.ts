@@ -8,8 +8,8 @@ declare const process: {
 
 const defaultApiUrl =
   Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api/v1'
-    : 'http://localhost:5000/api/v1';
+    ? 'http://10.0.2.2:3000/api/v1'
+    : 'http://localhost:3000/api/v1';
 
 /**
  * Central runtime configuration for the mobile client.
