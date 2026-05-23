@@ -1,7 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import type { Rental } from '../api/rental.api';
 
-const CANCELLED_RENTALS_KEY = 'local_cancelled_rental_ids';
 const RENTAL_LOCATIONS_KEY = 'local_rental_locations';
 
 type RentalLocationSnapshot = {
@@ -10,22 +9,6 @@ type RentalLocationSnapshot = {
 };
 
 type RentalLocationMap = Record<string, RentalLocationSnapshot>;
-
-const readCancelledIds = async () => {
-  try {
-    const raw = await SecureStore.getItemAsync(CANCELLED_RENTALS_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
-  } catch {
-    return [];
-  }
-};
-
-export const markRentalCancelledLocally = async (rentalId: string) => {
-  const ids = await readCancelledIds();
-  if (ids.includes(rentalId)) return;
-  await SecureStore.setItemAsync(CANCELLED_RENTALS_KEY, JSON.stringify([...ids, rentalId]));
-};
 
 const readRentalLocations = async (): Promise<RentalLocationMap> => {
   try {
@@ -69,9 +52,5 @@ const applyRentalLocationFallbacks = async (rentals: Rental[]) => {
 };
 
 export const getVisibleRentals = async (rentals: Rental[]) => {
-  const cancelledIds = new Set(await readCancelledIds());
-  const visibleRentals = rentals.filter(
-    (rental) => rental.rentalStatus !== 'CANCELLED' && !cancelledIds.has(rental.id)
-  );
-  return applyRentalLocationFallbacks(visibleRentals);
+  return applyRentalLocationFallbacks(rentals);
 };

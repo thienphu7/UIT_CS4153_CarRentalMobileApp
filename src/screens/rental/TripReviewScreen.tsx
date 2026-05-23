@@ -14,9 +14,7 @@ import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius } from '../../theme/spacing';
 import { getApiErrorMessage } from '../../utils/apiError';
-import { markRentalCancelledLocally } from '../../utils/localRentalOverrides';
 import { Ionicons } from '@expo/vector-icons';
-import { TouchableOpacity } from 'react-native';
 
 type TripReviewScreenProps = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'TripReview'>;
@@ -39,8 +37,7 @@ export const TripReviewScreen: React.FC<TripReviewScreenProps> = ({ navigation, 
           onPress: async () => {
             setIsLoading(true);
             try {
-              await rentalApi.updateRental(rentalId, { rentalStatus: 'CANCELLED' });
-              await markRentalCancelledLocally(rentalId);
+              await rentalApi.cancelRental(rentalId);
               Alert.alert('Thành công', 'Đơn thuê đã được hủy', [
                 { text: 'OK', onPress: () => navigation.goBack() },
               ]);
