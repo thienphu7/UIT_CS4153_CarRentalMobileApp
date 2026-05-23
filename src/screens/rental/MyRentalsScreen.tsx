@@ -44,17 +44,20 @@ export const MyRentalsScreen: React.FC<MyRentalsScreenProps> = ({ navigation }) 
 
   const loadRentals = useCallback(async () => {
     try {
-      const [rentalData, carData] = await Promise.all([
-        rentalApi.fetchMyRentals(),
-        carApi.fetchCars({ limit: 100 }),
-      ]);
+      const rentalData = await rentalApi.fetchMyRentals();
       setRentals(await getVisibleRentals(rentalData));
-      setCarsById(
-        carData.reduce<Record<string, Car>>((acc, car) => {
-          acc[car.id] = car;
-          return acc;
-        }, {})
-      );
+
+      try {
+        const carData = await carApi.fetchCars({ limit: 100 });
+        setCarsById(
+          carData.reduce<Record<string, Car>>((acc, car) => {
+            acc[car.id] = car;
+            return acc;
+          }, {})
+        );
+      } catch {
+        setCarsById({});
+      }
     } catch {
       setRentals([]);
       setCarsById({});
