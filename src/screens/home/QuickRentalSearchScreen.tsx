@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -21,7 +21,13 @@ import { Input } from '../../components/common/Input';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Radius, Shadow, Spacing } from '../../theme/spacing';
-import { formatDateTimeVN, toISOString } from '../../utils/dateUtils';
+import {
+  addMinimumRentalDuration,
+  formatDateTimeVN,
+  hasMinimumRentalDuration,
+  MIN_RENTAL_DURATION_HOURS,
+  toISOString,
+} from '../../utils/dateUtils';
 
 type QuickRentalSearchScreenProps = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'QuickRentalSearch'>;
@@ -35,19 +41,38 @@ const getDefaultDate = (offsetDays: number) => {
   return date;
 };
 
+const getSafeDate = (value: string | undefined, fallback: Date) => {
+  if (!value) return fallback;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? fallback : date;
+};
+
+const normalizeDropOffAt = (pickUpAt: Date, dropOffAt: Date) =>
+  hasMinimumRentalDuration(pickUpAt, dropOffAt) ? dropOffAt : addMinimumRentalDuration(pickUpAt);
+
 export const QuickRentalSearchScreen: React.FC<QuickRentalSearchScreenProps> = ({
   navigation,
   route,
 }) => {
+  const routePickUpAt = useMemo(
+    () => getSafeDate(route.params?.pickUpAt, getDefaultDate(1)),
+    [route.params?.pickUpAt]
+  );
+  const routeDropOffAt = useMemo(
+    () => normalizeDropOffAt(routePickUpAt, getSafeDate(route.params?.dropOffAt, getDefaultDate(4))),
+    [route.params?.dropOffAt, routePickUpAt]
+  );
   const [location, setLocation] = useState(route.params?.location ?? 'Hồ Chí Minh');
-  const [pickUpAt, setPickUpAt] = useState(
-    route.params?.pickUpAt ? new Date(route.params.pickUpAt) : getDefaultDate(1)
-  );
-  const [dropOffAt, setDropOffAt] = useState(
-    route.params?.dropOffAt ? new Date(route.params.dropOffAt) : getDefaultDate(4)
-  );
+  const [pickUpAt, setPickUpAt] = useState(routePickUpAt);
+  const [dropOffAt, setDropOffAt] = useState(routeDropOffAt);
   const [showPickUp, setShowPickUp] = useState(false);
   const [showDropOff, setShowDropOff] = useState(false);
+
+  useEffect(() => {
+    setLocation(route.params?.location ?? 'Hồ Chí Minh');
+    setPickUpAt(routePickUpAt);
+    setDropOffAt(routeDropOffAt);
+  }, [route.params?.location, routePickUpAt, routeDropOffAt]);
 
   const openAndroidDateTimePicker = (
     value: Date,
@@ -81,9 +106,31 @@ export const QuickRentalSearchScreen: React.FC<QuickRentalSearchScreenProps> = (
     });
   };
 
+  const updatePickUpAt = (date: Date) => {
+    setPickUpAt(date);
+    setDropOffAt((currentDropOffAt) =>
+      hasMinimumRentalDuration(date, currentDropOffAt)
+        ? currentDropOffAt
+        : addMinimumRentalDuration(date)
+    );
+  };
+
+  const updateDropOffAt = (date: Date) => {
+    if (!hasMinimumRentalDuration(pickUpAt, date)) {
+      Alert.alert(
+        'Thời gian thuê quá ngắn',
+        `Thời gian thuê xe tối thiểu là ${MIN_RENTAL_DURATION_HOURS} giờ.`
+      );
+      setDropOffAt(addMinimumRentalDuration(pickUpAt));
+      return;
+    }
+
+    setDropOffAt(date);
+  };
+
   const openPickUpPicker = () => {
     if (Platform.OS === 'android') {
-      openAndroidDateTimePicker(pickUpAt, new Date(), setPickUpAt);
+      openAndroidDateTimePicker(pickUpAt, new Date(), updatePickUpAt);
       return;
     }
 
@@ -92,7 +139,7 @@ export const QuickRentalSearchScreen: React.FC<QuickRentalSearchScreenProps> = (
 
   const openDropOffPicker = () => {
     if (Platform.OS === 'android') {
-      openAndroidDateTimePicker(dropOffAt, pickUpAt, setDropOffAt);
+      openAndroidDateTimePicker(dropOffAt, addMinimumRentalDuration(pickUpAt), updateDropOffAt);
       return;
     }
 
@@ -105,8 +152,11 @@ export const QuickRentalSearchScreen: React.FC<QuickRentalSearchScreenProps> = (
       return;
     }
 
-    if (dropOffAt <= pickUpAt) {
-      Alert.alert('Thời gian không hợp lệ', 'Thời gian trả xe phải sau thời gian nhận xe.');
+    if (!hasMinimumRentalDuration(pickUpAt, dropOffAt)) {
+      Alert.alert(
+        'Thời gian không hợp lệ',
+        `Thời gian thuê xe tối thiểu là ${MIN_RENTAL_DURATION_HOURS} giờ.`
+      );
       return;
     }
 
@@ -154,7 +204,7 @@ export const QuickRentalSearchScreen: React.FC<QuickRentalSearchScreenProps> = (
               minimumDate={new Date()}
               onChange={(_, date) => {
                 setShowPickUp(false);
-                if (date) setPickUpAt(date);
+                if (date) updatePickUpAt(date);
               }}
             />
           )}
@@ -172,10 +222,10 @@ export const QuickRentalSearchScreen: React.FC<QuickRentalSearchScreenProps> = (
             <DateTimePicker
               value={dropOffAt}
               mode="datetime"
-              minimumDate={pickUpAt}
+              minimumDate={addMinimumRentalDuration(pickUpAt)}
               onChange={(_, date) => {
                 setShowDropOff(false);
-                if (date) setDropOffAt(date);
+                if (date) updateDropOffAt(date);
               }}
             />
           )}

@@ -54,11 +54,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) =
           .isVerificationComplete(normalizedEmail);
 
         if (isVerificationComplete) {
-          navigation.replace('Payment', { carId: redirectParams.carId });
+          navigation.replace('Payment', {
+            carId: redirectParams.carId,
+            location: redirectParams.location,
+            pickUpAt: redirectParams.pickUpAt,
+            dropOffAt: redirectParams.dropOffAt,
+          });
         } else {
           navigation.replace('DocumentVerification', {
             redirectTo: 'Payment',
             carId: redirectParams.carId,
+            location: redirectParams.location,
+            pickUpAt: redirectParams.pickUpAt,
+            dropOffAt: redirectParams.dropOffAt,
           });
         }
         return;

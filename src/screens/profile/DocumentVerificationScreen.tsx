@@ -73,6 +73,7 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
     savedProfile.driverLicenseImageUri ?? ''
   );
   const [isSaving, setIsSaving] = useState(false);
+  const isBookingFlow = route.params?.redirectTo === 'Payment';
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -181,7 +182,12 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
       });
 
       if (route.params?.redirectTo === 'Payment' && route.params.carId) {
-        navigation.replace('Payment', { carId: route.params.carId });
+        navigation.replace('Payment', {
+          carId: route.params.carId,
+          location: route.params.location,
+          pickUpAt: route.params.pickUpAt,
+          dropOffAt: route.params.dropOffAt,
+        });
         return;
       }
 
@@ -232,7 +238,7 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <BookingStepIndicator currentStep={2} />
+        {isBookingFlow && <BookingStepIndicator currentStep={2} />}
 
         <View style={[styles.statusCard, Shadow.card]}>
           <View style={styles.statusIcon}>
@@ -241,7 +247,9 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
           <View style={styles.statusTextBlock}>
             <Text style={styles.statusTitle}>Xác thực giấy tờ</Text>
             <Text style={styles.statusSubtitle}>
-              Hoàn tất {completedCount}/7 mục để mở bước thanh toán và đặt xe.
+              {isBookingFlow
+                ? `Hoàn tất ${completedCount}/7 mục để mở bước thanh toán và đặt xe.`
+                : `Hoàn tất ${completedCount}/7 mục để cập nhật hồ sơ thuê xe.`}
             </Text>
           </View>
         </View>
@@ -307,7 +315,11 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
       </ScrollView>
 
       <View style={styles.bottomBar}>
-        <Button title="Lưu và tiếp tục" onPress={handleSave} isLoading={isSaving} />
+        <Button
+          title={isBookingFlow ? 'Lưu và tiếp tục' : 'Lưu hồ sơ'}
+          onPress={handleSave}
+          isLoading={isSaving}
+        />
       </View>
     </View>
   );

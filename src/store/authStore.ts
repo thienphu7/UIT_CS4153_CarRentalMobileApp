@@ -84,7 +84,12 @@ export const useAuthStore = create<AuthState>((set) => ({
         isLoading: false,
       });
     } catch (error) {
+      await clearAuthStorage();
       set({
+        token: null,
+        email: null,
+        role: null,
+        isAuthenticated: false,
         error: getApiErrorMessage(error, 'Đăng nhập thất bại. Vui lòng thử lại.'),
         isLoading: false,
       });
@@ -97,7 +102,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await authApi.register(payload);
-      set({ isLoading: false });
+      await clearAuthStorage();
+      set({
+        token: null,
+        email: null,
+        role: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     } catch (error) {
       set({
         error: getApiErrorMessage(error, 'Đăng ký thất bại. Vui lòng thử lại.'),

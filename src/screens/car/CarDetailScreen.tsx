@@ -39,7 +39,7 @@ const SpecItem = ({ icon, label, value }: { icon: string; label: string; value: 
 );
 
 export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, route }) => {
-  const { carId } = route.params;
+  const { carId, location, pickUpAt, dropOffAt } = route.params;
   const { selectedCar, isLoading, fetchCarById } = useCarStore();
   const { isAuthenticated, email } = useAuthStore();
   const isVerificationComplete = useProfileStore((state) => state.isVerificationComplete(email));
@@ -55,16 +55,16 @@ export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, ro
   const description = getCarDescription(car);
   const handleBookNow = () => {
     if (!isAuthenticated) {
-      navigation.navigate('Login', { redirectTo: 'Payment', carId: car.id });
+      navigation.navigate('Login', { redirectTo: 'Payment', carId: car.id, location, pickUpAt, dropOffAt });
       return;
     }
 
     if (!isVerificationComplete) {
-      navigation.navigate('DocumentVerification', { redirectTo: 'Payment', carId: car.id });
+      navigation.navigate('DocumentVerification', { redirectTo: 'Payment', carId: car.id, location, pickUpAt, dropOffAt });
       return;
     }
 
-    navigation.navigate('Payment', { carId: car.id });
+    navigation.navigate('Payment', { carId: car.id, location, pickUpAt, dropOffAt });
   };
 
   return (

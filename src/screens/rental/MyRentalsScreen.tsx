@@ -7,6 +7,7 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -58,7 +59,7 @@ export const MyRentalsScreen: React.FC<MyRentalsScreenProps> = ({ navigation }) 
       } catch {
         setCarsById({});
       }
-    } catch {
+    } catch (error: any) {
       setRentals([]);
       setCarsById({});
     } finally {

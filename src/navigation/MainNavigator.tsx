@@ -32,14 +32,14 @@ export type MainTabParamList = {
 export type MainStackParamList = {
   HomeTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   QuickRentalSearch: { location?: string; pickUpAt?: string; dropOffAt?: string } | undefined;
-  CarDetail: { carId: string };
-  Payment: { carId: string };
-  DocumentVerification: { redirectTo?: 'Payment'; carId?: string } | undefined;
+  CarDetail: { carId: string; location?: string; pickUpAt?: string; dropOffAt?: string };
+  Payment: { carId: string; location?: string; pickUpAt?: string; dropOffAt?: string };
+  DocumentVerification: { redirectTo?: 'Payment'; carId?: string; location?: string; pickUpAt?: string; dropOffAt?: string } | undefined;
   TermsPolicy: undefined;
   BookingSuccess: { rentalId: string };
   TripReview: { rentalId: string };
-  Login: { redirectTo?: 'Payment'; carId?: string } | undefined;
-  Register: { redirectTo?: 'Payment'; carId?: string } | undefined;
+  Login: { redirectTo?: 'Payment'; carId?: string; location?: string; pickUpAt?: string; dropOffAt?: string } | undefined;
+  Register: { redirectTo?: 'Payment'; carId?: string; location?: string; pickUpAt?: string; dropOffAt?: string } | undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();

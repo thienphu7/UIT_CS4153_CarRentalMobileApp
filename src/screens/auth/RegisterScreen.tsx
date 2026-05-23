@@ -63,8 +63,15 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
       await register(payload);
       Alert.alert(
         'Đăng ký thành công',
-        'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
-        [{ text: 'Đăng nhập', onPress: () => navigation.navigate('Login', route.params) }]
+        'Tài khoản của bạn đã được tạo. Đăng nhập để tiếp tục.',
+        [
+          {
+            text: 'Đăng nhập',
+            onPress: () => {
+              navigation.navigate('Login', route.params);
+            },
+          },
+        ]
       );
     } catch (e: any) {
       Alert.alert(
