@@ -25,10 +25,25 @@ export const Input: React.FC<InputProps> = ({
   error,
   containerStyle,
   isPassword = false,
+  keyboardType = 'default',
+  autoCorrect,
   ...textInputProps
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const keyboardTypeValue = keyboardType ?? 'default';
+  const shouldDisableTextAssist =
+    isPassword ||
+    [
+      'ascii-capable',
+      'decimal-pad',
+      'email-address',
+      'number-pad',
+      'numeric',
+      'phone-pad',
+      'url',
+      'visible-password',
+    ].includes(keyboardTypeValue);
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -45,6 +60,8 @@ export const Input: React.FC<InputProps> = ({
           placeholderTextColor={Colors.outline}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          keyboardType={keyboardTypeValue}
+          autoCorrect={autoCorrect ?? !shouldDisableTextAssist}
           secureTextEntry={isPassword && !isPasswordVisible}
           {...textInputProps}
         />

@@ -3,9 +3,10 @@ import type { Rental } from '../api/rental.api';
 import { calcTotalAmount } from './dateUtils';
 
 export const getRentalAmount = (rental: Rental, car?: Car | null) => {
+  const rentalCar = car ?? rental.car;
+  if (rentalCar) return calcTotalAmount(rentalCar.pricePerHour, rental.pickUpAt, rental.dropOffAt);
   if (typeof rental.totalAmount === 'number') return rental.totalAmount;
-  if (!car) return 0;
-  return calcTotalAmount(car.pricePerHour, rental.pickUpAt, rental.dropOffAt);
+  return 0;
 };
 
 export const getRentalRouteText = (rental: Rental) => {

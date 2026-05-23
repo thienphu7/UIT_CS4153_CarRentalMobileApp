@@ -37,11 +37,41 @@ export interface QueryCarsParams {
 export type CreateCarPayload = Omit<Car, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateCarPayload = Partial<CreateCarPayload>;
 
+const DEFAULT_CAR_LIMIT = 100;
+
+const getTotalPages = <T>(payload: T[] | PaginatedResponse<T>) => {
+  if (Array.isArray(payload)) return 1;
+  return payload.totalPage ?? payload.meta?.totalPages ?? 1;
+};
+
 export const carApi = {
   /** GET /cars - public list with filters matching QueryCarDto. */
   fetchCars: async (params?: QueryCarsParams) => {
-    const { data } = await apiClient.get<Car[] | PaginatedResponse<Car>>('/cars', { params });
-    return unwrapCollection(data);
+    const requestParams = { limit: DEFAULT_CAR_LIMIT, ...params };
+    const { data } = await apiClient.get<Car[] | PaginatedResponse<Car>>('/cars', {
+      params: requestParams,
+    });
+    const cars = unwrapCollection(data);
+
+    if (params?.page || Array.isArray(data)) return cars;
+
+    const totalPages = getTotalPages(data);
+    const currentPage = data.page ?? data.meta?.page ?? 1;
+    if (totalPages <= currentPage) return cars;
+
+    const remainingPages = Array.from(
+      { length: totalPages - currentPage },
+      (_, index) => currentPage + index + 1
+    );
+    const pages = await Promise.all(
+      remainingPages.map((page) =>
+        apiClient.get<Car[] | PaginatedResponse<Car>>('/cars', {
+          params: { ...requestParams, page },
+        })
+      )
+    );
+
+    return cars.concat(pages.flatMap((response) => unwrapCollection(response.data)));
   },
 
   /** GET /cars/:id - public car detail. */

@@ -24,8 +24,8 @@ type SearchScreenProps = {
 
 const SORT_OPTIONS = [
   { label: 'Mới nhất', value: 'createdAt' },
-  { label: 'Giá tăng', value: 'price_asc' },
-  { label: 'Giá giảm', value: 'price_desc' },
+  { label: 'Giá tăng dần', value: 'price_asc' },
+  { label: 'Giá giảm dần', value: 'price_desc' },
 ] as const;
 
 type SortValue = (typeof SORT_OPTIONS)[number]['value'];
@@ -38,13 +38,13 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
   const [selectedSort, setSelectedSort] = useState<SortValue>('createdAt');
   const [error, setError] = useState<string | null>(null);
 
-  const sortCars = (data: Car[]) => {
-    if (selectedSort === 'price_asc') return [...data].sort((a, b) => a.pricePerHour - b.pricePerHour);
-    if (selectedSort === 'price_desc') return [...data].sort((a, b) => b.pricePerHour - a.pricePerHour);
+  const sortCars = (data: Car[], sortValue: SortValue = selectedSort) => {
+    if (sortValue === 'price_asc') return [...data].sort((a, b) => a.pricePerHour - b.pricePerHour);
+    if (sortValue === 'price_desc') return [...data].sort((a, b) => b.pricePerHour - a.pricePerHour);
     return [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (sortValue: SortValue = selectedSort, forceAll = false) => {
     setIsLoading(true);
     setHasSearched(true);
     setError(null);
@@ -54,17 +54,30 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
       limit: 100,
     };
 
-    const text = searchText.trim();
+    const text = forceAll ? '' : searchText.trim();
     if (text) params.search = text;
 
     try {
       const data = await carApi.fetchCars(params);
-      setCars(sortCars(data));
+      setCars(sortCars(data, sortValue));
     } catch (err) {
       setCars([]);
       setError(getApiErrorMessage(err, 'Không thể tìm kiếm xe.'));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSortChange = (sortValue: SortValue) => {
+    setSelectedSort(sortValue);
+
+    if (sortValue === 'price_asc' || sortValue === 'price_desc') {
+      handleSearch(sortValue, true);
+      return;
+    }
+
+    if (hasSearched) {
+      handleSearch(sortValue);
     }
   };
 
@@ -87,8 +100,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
             placeholderTextColor={Colors.outline}
             value={searchText}
             onChangeText={setSearchText}
-            onSubmitEditing={handleSearch}
+            onSubmitEditing={() => handleSearch()}
             returnKeyType="search"
+            autoCorrect
           />
           {searchText.length > 0 && (
             <TouchableOpacity onPress={clearSearch}>
@@ -102,7 +116,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
             <TouchableOpacity
               key={opt.value}
               style={[styles.sortChip, selectedSort === opt.value && styles.sortChipActive]}
-              onPress={() => setSelectedSort(opt.value)}
+              onPress={() => handleSortChange(opt.value)}
             >
               <Text style={[styles.sortChipText, selectedSort === opt.value && styles.sortChipTextActive]}>
                 {opt.label}
@@ -111,7 +125,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation }) => {
           ))}
         </ScrollView>
 
-        <TouchableOpacity style={styles.searchButton} onPress={handleSearch} activeOpacity={0.86}>
+        <TouchableOpacity style={styles.searchButton} onPress={() => handleSearch()} activeOpacity={0.86}>
           <Text style={styles.searchButtonText}>Tìm kiếm</Text>
         </TouchableOpacity>
       </View>

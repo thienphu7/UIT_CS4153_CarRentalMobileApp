@@ -1,15 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
+  ScrollView,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { rentalApi, Rental } from '../../api/rental.api';
+import { carApi, Car } from '../../api/car.api';
 import { RentalCard } from '../../components/common/RentalCard';
 import { LoadingOverlay } from '../../components/common/LoadingOverlay';
 import { Colors } from '../../theme/colors';
@@ -17,6 +20,7 @@ import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius } from '../../theme/spacing';
 import { Ionicons } from '@expo/vector-icons';
 import { RentalStatus } from '../../api/rental.api';
+import { getVisibleRentals } from '../../utils/localRentalOverrides';
 
 type MyRentalsScreenProps = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'HomeTabs'>;
@@ -36,21 +40,32 @@ export const MyRentalsScreen: React.FC<MyRentalsScreenProps> = ({ navigation }) 
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<RentalStatus | undefined>(undefined);
+  const [carsById, setCarsById] = useState<Record<string, Car>>({});
 
   const loadRentals = useCallback(async () => {
     try {
-      const data = await rentalApi.fetchMyRentals();
-      setRentals(data);
+      const [rentalData, carData] = await Promise.all([
+        rentalApi.fetchMyRentals(),
+        carApi.fetchCars({ limit: 100 }),
+      ]);
+      setRentals(await getVisibleRentals(rentalData));
+      setCarsById(
+        carData.reduce<Record<string, Car>>((acc, car) => {
+          acc[car.id] = car;
+          return acc;
+        }, {})
+      );
     } catch {
       setRentals([]);
+      setCarsById({});
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     loadRentals();
-  }, []);
+  }, [loadRentals]));
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -69,36 +84,36 @@ export const MyRentalsScreen: React.FC<MyRentalsScreenProps> = ({ navigation }) 
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Đơn thuê của tôi</Text>
-        <Text style={styles.count}>{rentals.length} đơn</Text>
+        <View style={styles.countGroup}>
+          <Text style={styles.countLabel}>Tổng đơn</Text>
+          <Text style={styles.count}>{rentals.length} đơn</Text>
+        </View>
       </View>
 
       {/* Filter Tabs */}
-      <FlatList
-        data={FILTER_TABS}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(item) => item.label}
-        contentContainerStyle={styles.filterList}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[
-              styles.filterTab,
-              activeFilter === item.status && styles.filterTabActive,
-            ]}
-            onPress={() => setActiveFilter(item.status)}
-          >
-            <Text
+      <View style={styles.filterBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterList}>
+          {FILTER_TABS.map((item) => (
+            <TouchableOpacity
+              key={item.label}
               style={[
-                styles.filterTabText,
-                activeFilter === item.status && styles.filterTabTextActive,
+                styles.filterTab,
+                activeFilter === item.status && styles.filterTabActive,
               ]}
+              onPress={() => setActiveFilter(item.status)}
             >
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        )}
-        style={styles.filterScroll}
-      />
+              <Text
+                style={[
+                  styles.filterTabText,
+                  activeFilter === item.status && styles.filterTabTextActive,
+                ]}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Rental List */}
       <FlatList
@@ -116,6 +131,7 @@ export const MyRentalsScreen: React.FC<MyRentalsScreenProps> = ({ navigation }) 
         renderItem={({ item }) => (
           <RentalCard
             rental={item}
+            car={carsById[item.carId]}
             onPress={() => navigation.navigate('TripReview', { rentalId: item.id })}
           />
         )}
@@ -139,33 +155,51 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.outlineVariant,
   },
   title: {
+    flex: 1,
     fontFamily: FontFamilies.displayBold,
     fontSize: FontSizes.h1Display,
     color: Colors.onSurface,
+  },
+  countGroup: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+    marginLeft: 16,
+  },
+  countLabel: {
+    fontFamily: FontFamilies.sansRegular,
+    fontSize: FontSizes.labelSm,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 2,
   },
   count: {
     fontFamily: FontFamilies.numericSemiBold,
     fontSize: FontSizes.bodyMain,
     color: Colors.onSurfaceVariant,
   },
-  filterScroll: {
+  filterBar: {
     backgroundColor: Colors.white,
     borderBottomWidth: 1,
     borderBottomColor: Colors.outlineVariant,
   },
-  filterList: { paddingHorizontal: Spacing.containerPadding, paddingVertical: 12, gap: 8 },
+  filterList: {
+    paddingHorizontal: Spacing.containerPadding,
+    paddingVertical: 12,
+    gap: 8,
+  },
   filterTab: {
     borderRadius: Radius.pill,
+    minWidth: 84,
+    height: 36,
     paddingHorizontal: 14,
-    paddingVertical: 6,
     backgroundColor: Colors.surfaceContainerHigh,
-    marginRight: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterTabActive: { backgroundColor: Colors.primaryContainer },
   filterTabText: {

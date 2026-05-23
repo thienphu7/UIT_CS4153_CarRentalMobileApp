@@ -12,6 +12,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius, Shadow } from '../../theme/spacing';
+import { getDisplayNameFromEmail } from '../../utils/userDisplay';
 
 const MenuItem = ({
   icon,
@@ -35,6 +36,7 @@ const MenuItem = ({
 
 export const ProfileScreen: React.FC = () => {
   const { email, logout } = useAuthStore();
+  const displayName = getDisplayNameFromEmail(email) || 'Người dùng';
 
   const handleLogout = () => {
     Alert.alert(
@@ -48,7 +50,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   // Extract first letter for avatar
-  const avatarLetter = email ? email[0].toUpperCase() : 'U';
+  const avatarLetter = displayName[0].toUpperCase();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -57,7 +59,7 @@ export const ProfileScreen: React.FC = () => {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{avatarLetter}</Text>
         </View>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.name}>{displayName}</Text>
         <Text style={styles.role}>Khách hàng</Text>
       </View>
 
@@ -133,9 +135,9 @@ const styles = StyleSheet.create({
     fontSize: 36,
     color: Colors.onPrimary,
   },
-  email: {
+  name: {
     fontFamily: FontFamilies.sansSemiBold,
-    fontSize: FontSizes.bodyMain,
+    fontSize: FontSizes.h2Semibold,
     color: Colors.onPrimary,
   },
   role: {

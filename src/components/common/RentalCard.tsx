@@ -2,6 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Rental } from '../../api/rental.api';
+import { Car } from '../../api/car.api';
 import { RENTAL_STATUS_CONFIG } from '../../constants/rentalStatus';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
@@ -13,11 +14,13 @@ import { StatusBadge } from './StatusBadge';
 
 interface RentalCardProps {
   rental: Rental;
+  car?: Car;
   onPress?: (rental: Rental) => void;
 }
 
-export const RentalCard: React.FC<RentalCardProps> = ({ rental, onPress }) => {
+export const RentalCard: React.FC<RentalCardProps> = ({ rental, car, onPress }) => {
   const config = RENTAL_STATUS_CONFIG[rental.rentalStatus] ?? RENTAL_STATUS_CONFIG.PENDING;
+  const totalAmount = getRentalAmount(rental, car ?? rental.car);
 
   return (
     <TouchableOpacity
@@ -51,7 +54,9 @@ export const RentalCard: React.FC<RentalCardProps> = ({ rental, onPress }) => {
 
       <View style={styles.totalRow}>
         <Text style={styles.totalLabel}>Tổng tiền</Text>
-        <Text style={styles.totalAmount}>{formatVND(getRentalAmount(rental))}</Text>
+        <Text style={styles.totalAmount} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.76}>
+          {formatVND(totalAmount)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -105,13 +110,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalLabel: {
+    flex: 1,
     fontFamily: FontFamilies.sansRegular,
     fontSize: FontSizes.bodyMain,
     color: Colors.onSurfaceVariant,
   },
   totalAmount: {
+    flex: 1,
     fontFamily: FontFamilies.numericBold,
-    fontSize: FontSizes.priceDisplay,
+    fontSize: 20,
+    lineHeight: 26,
     color: Colors.primaryContainer,
+    textAlign: 'right',
   },
 });
