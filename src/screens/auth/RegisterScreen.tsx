@@ -10,8 +10,9 @@ import {
   Platform,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
+import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useAuthStore } from '../../store/authStore';
 import { RegisterPayload } from '../../api/auth.api';
 import { Button } from '../../components/common/Button';
@@ -19,12 +20,14 @@ import { Input } from '../../components/common/Input';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing } from '../../theme/spacing';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type RegisterScreenProps = {
-  navigation: NativeStackNavigationProp<AuthStackParamList, 'Register'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'Register'>;
+  route: RouteProp<MainStackParamList, 'Register'>;
 };
 
-export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
+export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, route }) => {
   const { register, isLoading } = useAuthStore();
 
   const {
@@ -44,17 +47,27 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
   });
 
   const onSubmit = async (data: RegisterPayload) => {
+    const payload: RegisterPayload = {
+      ...data,
+      email: data.email.trim(),
+      fullName: data.fullName.trim(),
+      phone: data.phone.trim(),
+      address: data.address.trim(),
+      driverLicense: data.driverLicense.trim(),
+      dateOfBirth: data.dateOfBirth?.trim() || null,
+    };
+
     try {
-      await register(data);
+      await register(payload);
       Alert.alert(
-        'Đăng ký thành công! 🎉',
+        'Đăng ký thành công',
         'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập.',
-        [{ text: 'Đăng nhập', onPress: () => navigation.navigate('Login') }]
+        [{ text: 'Đăng nhập', onPress: () => navigation.navigate('Login', route.params) }]
       );
     } catch (e: any) {
       Alert.alert(
         'Đăng ký thất bại',
-        e?.response?.data?.message || 'Vui lòng thử lại'
+        getApiErrorMessage(e, 'Vui lòng thử lại')
       );
     }
   };
@@ -180,6 +193,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
         <Controller
           control={control}
           name="dateOfBirth"
+          rules={{
+            validate: (value) =>
+              !value?.trim() ||
+              /^\d{4}-\d{2}-\d{2}$/.test(value.trim()) ||
+              'Ngày sinh phải có định dạng YYYY-MM-DD',
+          }}
           render={({ field: { onChange, value } }) => (
             <Input
               label="Ngày sinh (tuỳ chọn)"
@@ -202,7 +221,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
         {/* Login Link */}
         <View style={styles.loginRow}>
           <Text style={styles.loginText}>Đã có tài khoản? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Login', route.params)}>
             <Text style={styles.loginLink}>Đăng nhập</Text>
           </TouchableOpacity>
         </View>

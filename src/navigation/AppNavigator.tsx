@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { useAuthStore } from '../store/authStore';
 import { subscribeAuthExpired } from '../store/authEvents';
-import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { AdminNavigator } from './AdminNavigator';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
@@ -29,9 +28,9 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? role === 'EMPLOYEE' ? <AdminNavigator /> : <MainNavigator /> : <AuthNavigator />}
-      {/*<MainNavigator />*/}
-      {/*<AdminNavigator />}*/}
+      {isAuthenticated && role === 'EMPLOYEE' ? <AdminNavigator /> : <MainNavigator />}
+      {/* Test customer screen without login: <MainNavigator /> */}
+      {/* Test admin screen without login: <AdminNavigator /> */}
     </NavigationContainer>
   );
 };

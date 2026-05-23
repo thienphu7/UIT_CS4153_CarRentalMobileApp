@@ -13,6 +13,8 @@ import { Button } from '../../components/common/Button';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius } from '../../theme/spacing';
+import { getApiErrorMessage } from '../../utils/apiError';
+import { markRentalCancelledLocally } from '../../utils/localRentalOverrides';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 
@@ -38,11 +40,12 @@ export const TripReviewScreen: React.FC<TripReviewScreenProps> = ({ navigation, 
             setIsLoading(true);
             try {
               await rentalApi.updateRental(rentalId, { rentalStatus: 'CANCELLED' });
+              await markRentalCancelledLocally(rentalId);
               Alert.alert('Thành công', 'Đơn thuê đã được hủy', [
                 { text: 'OK', onPress: () => navigation.goBack() },
               ]);
             } catch (e: any) {
-              Alert.alert('Lỗi', e?.response?.data?.message || 'Không thể hủy đơn thuê');
+              Alert.alert('Lỗi', getApiErrorMessage(e, 'Không thể hủy đơn thuê'));
             } finally {
               setIsLoading(false);
             }

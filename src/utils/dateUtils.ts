@@ -1,3 +1,5 @@
+import { getHourlyPriceFromDaily } from './formatCurrency';
+
 /**
  * Format a Date object to ISO string for API requests
  * Backend expects ISO 8601: "2024-12-25T10:00:00.000Z"
@@ -47,10 +49,10 @@ export const calcHours = (pickUpAt: string, dropOffAt: string): number => {
  * Calculate total rental amount
  */
 export const calcTotalAmount = (
-  pricePerHour: number,
+  pricePerDay: number,
   pickUpAt: string,
   dropOffAt: string
 ): number => {
   const hours = calcHours(pickUpAt, dropOffAt);
-  return pricePerHour * hours;
+  return getHourlyPriceFromDaily(pricePerDay) * hours;
 };

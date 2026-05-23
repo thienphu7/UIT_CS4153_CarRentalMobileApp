@@ -15,6 +15,8 @@ import { CarDetailScreen } from '../screens/car/CarDetailScreen';
 import { PaymentScreen } from '../screens/booking/PaymentScreen';
 import { BookingSuccessScreen } from '../screens/booking/BookingSuccessScreen';
 import { TripReviewScreen } from '../screens/rental/TripReviewScreen';
+import { LoginScreen } from '../screens/auth/LoginScreen';
+import { RegisterScreen } from '../screens/auth/RegisterScreen';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -30,6 +32,8 @@ export type MainStackParamList = {
   Payment: { carId: string };
   BookingSuccess: { rentalId: string };
   TripReview: { rentalId: string };
+  Login: { redirectTo?: 'Payment'; carId?: string } | undefined;
+  Register: { redirectTo?: 'Payment'; carId?: string } | undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -89,5 +93,7 @@ export const MainNavigator: React.FC = () => (
     <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Đặt xe' }} />
     <Stack.Screen name="BookingSuccess" component={BookingSuccessScreen} options={{ headerShown: false }} />
     <Stack.Screen name="TripReview" component={TripReviewScreen} options={{ title: 'Đánh giá chuyến đi' }} />
+    <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
+    <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
   </Stack.Navigator>
 );

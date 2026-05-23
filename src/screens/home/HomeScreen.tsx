@@ -18,26 +18,33 @@ import { Car } from '../../api/car.api';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius } from '../../theme/spacing';
+import { getDisplayNameFromEmail } from '../../utils/userDisplay';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'HomeTabs'>;
 };
 
 const CAR_TYPES = ['Tất cả', 'SUV', 'Sedan', 'Hatchback', 'MPV', 'Pickup'];
+const HOME_CAR_LIMIT = 100;
+const FEATURED_CAR_COUNT = 3;
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { email } = useAuthStore();
   const { cars, isLoading, fetchCars } = useCarStore();
   const [selectedType, setSelectedType] = React.useState('Tất cả');
   const [refreshing, setRefreshing] = React.useState(false);
+  const displayName = getDisplayNameFromEmail(email);
 
   useEffect(() => {
-    fetchCars({ carStatus: 'AVAILABLE' });
+    fetchCars({ carStatus: 'AVAILABLE', limit: HOME_CAR_LIMIT });
   }, []);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const params = selectedType === 'Tất cả' ? { carStatus: 'AVAILABLE' as const } : { carType: selectedType, carStatus: 'AVAILABLE' as const };
+    const params =
+      selectedType === 'Tất cả'
+        ? { carStatus: 'AVAILABLE' as const, limit: HOME_CAR_LIMIT }
+        : { carType: selectedType, carStatus: 'AVAILABLE' as const, limit: HOME_CAR_LIMIT };
     await fetchCars(params);
     setRefreshing(false);
   };
@@ -45,9 +52,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const handleFilterType = (type: string) => {
     setSelectedType(type);
     if (type === 'Tất cả') {
-      fetchCars({ carStatus: 'AVAILABLE' });
+      fetchCars({ carStatus: 'AVAILABLE', limit: HOME_CAR_LIMIT });
     } else {
-      fetchCars({ carType: type, carStatus: 'AVAILABLE' });
+      fetchCars({ carType: type, carStatus: 'AVAILABLE', limit: HOME_CAR_LIMIT });
     }
   };
 
@@ -55,7 +62,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     navigation.navigate('CarDetail', { carId: car.id });
   };
 
-  const featuredCars = cars.slice(0, 3);
+  const featuredCars = cars.slice(0, FEATURED_CAR_COUNT);
   const allCars = cars;
 
   if (isLoading && cars.length === 0) return <LoadingOverlay />;
@@ -71,8 +78,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     >
       {/* Header Greeting */}
       <View style={styles.header}>
-        <Text style={styles.greeting}>Xin chào 👋</Text>
-        <Text style={styles.email} numberOfLines={1}>{email}</Text>
+        <View style={styles.greetingBlock}>
+          <Text style={styles.greetingLabel}>Xin chào</Text>
+          <Text style={styles.greetingName} numberOfLines={1}>{displayName || 'Bạn'}</Text>
+        </View>
         <Text style={styles.headline}>Tìm xe ưng ý của bạn</Text>
       </View>
 
@@ -80,9 +89,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       {featuredCars.length > 0 && (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Xe nổi bật</Text>
+            <Text style={styles.sectionHeaderTitle}>Xe nổi bật</Text>
             <TouchableOpacity onPress={() => navigation.navigate('Search' as any)}>
-              <Text style={styles.seeAll}>Xem tất cả</Text>
+              <Text style={styles.seeAll}>Tìm xe</Text>
             </TouchableOpacity>
           </View>
           <FlatList
@@ -90,7 +99,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.id}
-            contentContainerStyle={{ paddingLeft: Spacing.containerPadding }}
+            contentContainerStyle={styles.featuredList}
             renderItem={({ item }) => (
               <CarCard car={item} onPress={handleCarPress} horizontal />
             )}
@@ -140,16 +149,21 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: Spacing.sectionMargin,
   },
-  greeting: {
-    fontFamily: FontFamilies.sansRegular,
-    fontSize: FontSizes.bodyMain,
-    color: Colors.onSurfaceVariant,
+  greetingBlock: {
+    marginBottom: 14,
   },
-  email: {
+  greetingLabel: {
+    fontFamily: FontFamilies.sansRegular,
+    fontSize: FontSizes.labelSm,
+    color: Colors.onSurfaceVariant,
+    textTransform: 'uppercase',
+  },
+  greetingName: {
     fontFamily: FontFamilies.sansSemiBold,
-    fontSize: FontSizes.bodyMain,
+    fontSize: 18,
+    lineHeight: 24,
     color: Colors.primaryContainer,
-    marginBottom: 12,
+    marginTop: 2,
   },
   headline: {
     fontFamily: FontFamilies.displayBold,
@@ -167,6 +181,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.containerPadding,
     marginBottom: Spacing.stackMd,
   },
+  sectionHeaderTitle: {
+    fontFamily: FontFamilies.sansSemiBold,
+    fontSize: FontSizes.h2Semibold,
+    lineHeight: 28,
+    color: Colors.onSurface,
+  },
   sectionTitle: {
     fontFamily: FontFamilies.sansSemiBold,
     fontSize: FontSizes.h2Semibold,
@@ -177,7 +197,13 @@ const styles = StyleSheet.create({
   seeAll: {
     fontFamily: FontFamilies.sansSemiBold,
     fontSize: FontSizes.bodyMain,
+    lineHeight: 28,
     color: Colors.primaryContainer,
+  },
+  featuredList: {
+    paddingLeft: Spacing.containerPadding,
+    paddingRight: Spacing.containerPadding,
+    paddingBottom: 12,
   },
   filterScroll: { paddingLeft: Spacing.containerPadding, marginBottom: Spacing.stackMd },
   filterChip: {

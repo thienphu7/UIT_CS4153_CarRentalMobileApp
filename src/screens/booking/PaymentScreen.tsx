@@ -8,7 +8,10 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerAndroid,
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { MainStackParamList } from '../../navigation/MainNavigator';
@@ -22,6 +25,8 @@ import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius, Shadow } from '../../theme/spacing';
 import { formatVND, formatPricePerHour } from '../../utils/formatCurrency';
 import { formatDateTimeVN, toISOString, calcTotalAmount } from '../../utils/dateUtils';
+import { getApiErrorMessage } from '../../utils/apiError';
+import { saveRentalLocationsLocally } from '../../utils/localRentalOverrides';
 
 import { Ionicons } from '@expo/vector-icons';
 
@@ -56,6 +61,56 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
     ? calcTotalAmount(car.pricePerHour, toISOString(pickUpAt), toISOString(dropOffAt))
     : 0;
 
+  const openAndroidDateTimePicker = (
+    value: Date,
+    minimumDate: Date,
+    onConfirm: (date: Date) => void
+  ) => {
+    DateTimePickerAndroid.open({
+      value,
+      minimumDate,
+      mode: 'date',
+      onChange: (dateEvent: DateTimePickerEvent, selectedDate?: Date) => {
+        if (dateEvent.type !== 'set' || !selectedDate) return;
+
+        const nextDate = new Date(selectedDate);
+        nextDate.setHours(value.getHours(), value.getMinutes(), 0, 0);
+
+        setTimeout(() => {
+          DateTimePickerAndroid.open({
+            value: nextDate,
+            mode: 'time',
+            onChange: (timeEvent: DateTimePickerEvent, selectedTime?: Date) => {
+              if (timeEvent.type !== 'set' || !selectedTime) return;
+
+              const nextDateTime = new Date(nextDate);
+              nextDateTime.setHours(selectedTime.getHours(), selectedTime.getMinutes(), 0, 0);
+              onConfirm(nextDateTime);
+            },
+          });
+        }, 0);
+      },
+    });
+  };
+
+  const openPickUpPicker = () => {
+    if (Platform.OS === 'android') {
+      openAndroidDateTimePicker(pickUpAt, new Date(), setPickUpAt);
+      return;
+    }
+
+    setShowPickUp(true);
+  };
+
+  const openDropOffPicker = () => {
+    if (Platform.OS === 'android') {
+      openAndroidDateTimePicker(dropOffAt, pickUpAt, setDropOffAt);
+      return;
+    }
+
+    setShowDropOff(true);
+  };
+
   const handleBook = async () => {
     if (!pickUpLocation.trim() || !dropOffLocation.trim()) {
       Alert.alert('Thiếu thông tin', 'Vui lòng nhập địa điểm đón và trả xe');
@@ -75,11 +130,15 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
         pickUpLocation: pickUpLocation.trim(),
         dropOffLocation: dropOffLocation.trim(),
       });
+      await saveRentalLocationsLocally(data.id, {
+        pickUpLocation: pickUpLocation.trim(),
+        dropOffLocation: dropOffLocation.trim(),
+      });
       navigation.replace('BookingSuccess', { rentalId: data.id });
     } catch (e: any) {
       Alert.alert(
         'Đặt xe thất bại',
-        e?.response?.data?.message || 'Vui lòng thử lại sau'
+        getApiErrorMessage(e, 'Vui lòng thử lại sau')
       );
     } finally {
       setIsLoading(false);
@@ -97,8 +156,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       >
         {/* Car Summary */}
         <View style={[styles.carSummary, Shadow.card]}>
-          <Text style={styles.carBrand}>{car.brand} {car.model}</Text>
-          <Text style={styles.carPrice}>{formatPricePerHour(car.pricePerHour)}</Text>
+          <Text style={styles.carBrand} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
+            {car.brand} {car.model}
+          </Text>
+          <Text style={styles.carPrice} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.78}>
+            {formatPricePerHour(car.pricePerHour)}
+          </Text>
         </View>
 
         {/* Date Pickers */}
@@ -107,7 +170,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
 
           <TouchableOpacity
             style={styles.datePicker}
-            onPress={() => setShowPickUp(true)}
+            onPress={openPickUpPicker}
           >
             <Ionicons name="calendar-outline" size={20} color={Colors.primaryContainer} />
             <View style={styles.datePickerText}>
@@ -117,7 +180,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
             <Ionicons name="chevron-forward" size={16} color={Colors.outline} />
           </TouchableOpacity>
 
-          {showPickUp && (
+          {Platform.OS !== 'android' && showPickUp && (
             <DateTimePicker
               value={pickUpAt}
               mode="datetime"
@@ -132,7 +195,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
 
           <TouchableOpacity
             style={styles.datePicker}
-            onPress={() => setShowDropOff(true)}
+            onPress={openDropOffPicker}
           >
             <Ionicons name="flag-outline" size={20} color={Colors.primaryContainer} />
             <View style={styles.datePickerText}>
@@ -142,7 +205,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
             <Ionicons name="chevron-forward" size={16} color={Colors.outline} />
           </TouchableOpacity>
 
-          {showDropOff && (
+          {Platform.OS !== 'android' && showDropOff && (
             <DateTimePicker
               value={dropOffAt}
               mode="datetime"
@@ -178,16 +241,20 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
           <Text style={styles.sectionTitle}>Tổng kết đơn hàng</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Xe thuê</Text>
-            <Text style={styles.summaryValue}>{car.brand} {car.model}</Text>
+            <Text style={styles.summaryValue} numberOfLines={1}>{car.brand} {car.model}</Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Đơn giá</Text>
-            <Text style={styles.summaryValue}>{formatPricePerHour(car.pricePerHour)}</Text>
+            <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
+              {formatPricePerHour(car.pricePerHour)}
+            </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.summaryRow}>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
-            <Text style={styles.totalValue}>{formatVND(totalAmount)}</Text>
+            <Text style={styles.totalValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.76}>
+              {formatVND(totalAmount)}
+            </Text>
           </View>
         </View>
 
@@ -198,7 +265,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       <View style={styles.bottomBar}>
         <View style={styles.totalPreview}>
           <Text style={styles.totalPreviewLabel}>Tổng thanh toán</Text>
-          <Text style={styles.totalPreviewValue}>{formatVND(totalAmount)}</Text>
+          <Text style={styles.totalPreviewValue} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.72}>
+            {formatVND(totalAmount)}
+          </Text>
         </View>
         <Button
           title="Xác nhận đặt xe"
@@ -224,17 +293,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 12,
     marginBottom: Spacing.stackMd,
   },
   carBrand: {
+    flex: 1,
+    minWidth: 0,
     fontFamily: FontFamilies.sansSemiBold,
-    fontSize: FontSizes.h2Semibold,
+    fontSize: 18,
+    lineHeight: 24,
     color: Colors.onSurface,
   },
   carPrice: {
     fontFamily: FontFamilies.numericBold,
-    fontSize: FontSizes.priceDisplay,
+    fontSize: 20,
+    lineHeight: 26,
     color: Colors.primaryContainer,
+    maxWidth: 148,
+    textAlign: 'right',
   },
   section: { marginBottom: Spacing.stackMd },
   sectionTitle: {
@@ -273,6 +349,8 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
     marginBottom: 10,
   },
   summaryLabel: {
@@ -281,9 +359,11 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
   summaryValue: {
+    flex: 1,
     fontFamily: FontFamilies.sansSemiBold,
     fontSize: FontSizes.bodyMain,
     color: Colors.onSurface,
+    textAlign: 'right',
   },
   divider: { height: 1, backgroundColor: Colors.outlineVariant, marginVertical: 10 },
   totalLabel: {
@@ -293,8 +373,11 @@ const styles = StyleSheet.create({
   },
   totalValue: {
     fontFamily: FontFamilies.numericBold,
-    fontSize: FontSizes.priceDisplay,
+    fontSize: 20,
+    lineHeight: 26,
     color: Colors.primaryContainer,
+    flex: 1,
+    textAlign: 'right',
   },
   bottomBar: {
     backgroundColor: Colors.white,
@@ -305,9 +388,9 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.outlineVariant,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
-  totalPreview: { flex: 1 },
+  totalPreview: { flex: 1.05, minWidth: 0 },
   totalPreviewLabel: {
     fontFamily: FontFamilies.sansRegular,
     fontSize: FontSizes.labelSm,
@@ -315,8 +398,9 @@ const styles = StyleSheet.create({
   },
   totalPreviewValue: {
     fontFamily: FontFamilies.numericBold,
-    fontSize: FontSizes.priceDisplay,
+    fontSize: 20,
+    lineHeight: 26,
     color: Colors.primaryContainer,
   },
-  confirmButton: { flex: 1 },
+  confirmButton: { flex: 1.2 },
 });

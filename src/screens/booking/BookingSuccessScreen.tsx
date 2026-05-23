@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { MainStackParamList } from '../../navigation/MainNavigator';
@@ -21,12 +20,7 @@ export const BookingSuccessScreen: React.FC<BookingSuccessScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Success Icon */}
-      <View style={styles.iconWrapper}>
-        <Ionicons name="checkmark-circle" size={80} color={Colors.primaryContainer} />
-      </View>
-
-      <Text style={styles.title}>Đặt xe thành công! 🎉</Text>
+      <Text style={styles.title}>Đặt xe thành công</Text>
       <Text style={styles.subtitle}>
         Đơn thuê xe của bạn đã được gửi đi.{'\n'}
         Vui lòng chờ nhân viên xác nhận trong vòng 24 giờ.
@@ -54,7 +48,7 @@ export const BookingSuccessScreen: React.FC<BookingSuccessScreenProps> = ({
 
         <TouchableOpacity
           style={styles.secondaryButton}
-          onPress={() => navigation.navigate('HomeTabs')}
+          onPress={() => navigation.navigate('HomeTabs', { screen: 'Rentals' })}
         >
           <Text style={styles.secondaryButtonText}>Xem đơn thuê của tôi</Text>
         </TouchableOpacity>
@@ -70,15 +64,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.containerPadding,
-  },
-  iconWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: Colors.surfaceContainerHigh,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.stackLg,
   },
   title: {
     fontFamily: FontFamilies.displayBold,

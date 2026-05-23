@@ -9,20 +9,23 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing } from '../../theme/spacing';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 type LoginScreenProps = {
-  navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'Login'>;
+  route: RouteProp<MainStackParamList, 'Login'>;
 };
 
-export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
+export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) => {
   const { login, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,11 +45,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     if (!validate()) return;
     try {
       await login({ email, password });
-      // AppNavigator will auto-switch to MainNavigator on isAuthenticated change
+      const redirectParams = route.params;
+      if (redirectParams?.redirectTo === 'Payment' && redirectParams.carId) {
+        navigation.replace('Payment', { carId: redirectParams.carId });
+        return;
+      }
+
+      navigation.navigate('HomeTabs');
     } catch (e: any) {
       Alert.alert(
         'Đăng nhập thất bại',
-        e?.response?.data?.message || 'Sai email hoặc mật khẩu'
+        getApiErrorMessage(e, 'Sai email hoặc mật khẩu')
       );
     }
   };
@@ -62,7 +71,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Chào mừng trở lại 👋</Text>
+          <Text style={styles.title}>Chào mừng trở lại</Text>
           <Text style={styles.subtitle}>
             Đăng nhập để tiếp tục trải nghiệm dịch vụ thuê xe cao cấp
           </Text>
@@ -100,7 +109,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         {/* Register Link */}
         <View style={styles.registerRow}>
           <Text style={styles.registerText}>Chưa có tài khoản? </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Register', route.params)}>
             <Text style={styles.registerLink}>Đăng ký ngay</Text>
           </TouchableOpacity>
         </View>

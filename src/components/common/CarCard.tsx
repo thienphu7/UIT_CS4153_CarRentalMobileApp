@@ -29,25 +29,29 @@ export const CarCard: React.FC<CarCardProps> = ({ car, onPress, horizontal = fal
         onPress={() => onPress(car)}
         activeOpacity={0.9}
       >
-        {car.imagePath ? (
-          <Image source={{ uri: car.imagePath }} style={styles.imageHorizontal} resizeMode="cover" />
-        ) : (
-          <View style={[styles.imageHorizontal, styles.imageFallback]}>
-            <Ionicons name="car-sport-outline" size={26} color={Colors.primaryContainer} />
-          </View>
-        )}
+        <View style={styles.imageHorizontalFrame}>
+          {car.imagePath ? (
+            <Image source={{ uri: car.imagePath }} style={styles.imageHorizontal} resizeMode="contain" />
+          ) : (
+            <View style={[styles.imageHorizontal, styles.imageFallback]}>
+              <Ionicons name="car-sport-outline" size={26} color={Colors.primaryContainer} />
+            </View>
+          )}
+        </View>
         <View style={styles.infoHorizontal}>
-          <Text style={styles.brand} numberOfLines={1}>
+          <Text style={styles.brandHorizontal} numberOfLines={1}>
             {car.brand}
           </Text>
-          <Text style={styles.model} numberOfLines={1}>
+          <Text style={styles.modelHorizontal} numberOfLines={1}>
             {car.model}
           </Text>
-          <View style={styles.specRow}>
+          <View style={styles.specRowHorizontal}>
             <SpecChip icon="people-outline" label={`${car.capacity} chỗ`} />
             <SpecChip icon="settings-outline" label={car.carType} />
           </View>
-          <Text style={styles.price}>{formatPricePerHour(car.pricePerHour)}</Text>
+          <Text style={styles.priceHorizontal} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
+            {formatPricePerHour(car.pricePerHour)}
+          </Text>
           {!isAvailable && (
             <View style={styles.unavailableBadge}>
               <Text style={styles.unavailableText}>Không có sẵn</Text>
@@ -64,13 +68,15 @@ export const CarCard: React.FC<CarCardProps> = ({ car, onPress, horizontal = fal
       onPress={() => onPress(car)}
       activeOpacity={0.9}
     >
-      {car.imagePath ? (
-        <Image source={{ uri: car.imagePath }} style={styles.image} resizeMode="cover" />
-      ) : (
-        <View style={[styles.image, styles.imageFallback]}>
-          <Ionicons name="car-sport-outline" size={42} color={Colors.primaryContainer} />
-        </View>
-      )}
+      <View style={styles.imageFrame}>
+        {car.imagePath ? (
+          <Image source={{ uri: car.imagePath }} style={styles.image} resizeMode="contain" />
+        ) : (
+          <View style={[styles.image, styles.imageFallback]}>
+            <Ionicons name="car-sport-outline" size={42} color={Colors.primaryContainer} />
+          </View>
+        )}
+      </View>
       <View style={styles.info}>
         <View style={styles.titleRow}>
           <View style={styles.titleLeft}>
@@ -81,7 +87,9 @@ export const CarCard: React.FC<CarCardProps> = ({ car, onPress, horizontal = fal
               {car.model}
             </Text>
           </View>
-          <Text style={styles.price}>{formatPricePerHour(car.pricePerHour)}</Text>
+          <Text style={styles.price} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.82}>
+            {formatPricePerHour(car.pricePerHour)}
+          </Text>
         </View>
         <View style={styles.specRow}>
           <SpecChip icon="people-outline" label={`${car.capacity} chỗ`} />
@@ -113,9 +121,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: Spacing.stackMd,
   },
+  imageFrame: {
+    height: 176,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
   image: {
     width: '100%',
-    height: 180,
+    height: '100%',
+    backgroundColor: Colors.white,
   },
   imageFallback: {
     backgroundColor: Colors.surfaceContainerHigh,
@@ -145,8 +160,10 @@ const styles = StyleSheet.create({
   },
   price: {
     fontFamily: FontFamilies.numericBold,
-    fontSize: FontSizes.priceDisplay,
+    fontSize: 20,
+    lineHeight: 26,
     color: Colors.primaryContainer,
+    flexShrink: 1,
   },
   specRow: {
     flexDirection: 'row',
@@ -186,18 +203,57 @@ const styles = StyleSheet.create({
   cardHorizontal: {
     backgroundColor: Colors.white,
     borderRadius: Radius.lg,
-    flexDirection: 'row',
     overflow: 'hidden',
     marginRight: Spacing.gridGutter,
-    width: 260,
+    width: 270,
+    height: 266,
+    marginBottom: 4,
+  },
+  imageHorizontalFrame: {
+    height: 124,
+    backgroundColor: Colors.white,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 8,
   },
   imageHorizontal: {
-    width: 100,
+    width: '100%',
     height: '100%',
+    backgroundColor: Colors.white,
   },
   infoHorizontal: {
     flex: 1,
-    padding: 12,
-    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 14,
+    alignItems: 'center',
+    gap: 5,
+  },
+  brandHorizontal: {
+    fontFamily: FontFamilies.sansSemiBold,
+    fontSize: FontSizes.h2Semibold,
+    color: Colors.onSurface,
+    textAlign: 'center',
+  },
+  modelHorizontal: {
+    fontFamily: FontFamilies.sansRegular,
+    fontSize: FontSizes.bodyMain,
+    color: Colors.onSurfaceVariant,
+    textAlign: 'center',
+  },
+  specRowHorizontal: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  priceHorizontal: {
+    alignSelf: 'stretch',
+    fontFamily: FontFamilies.numericBold,
+    fontSize: 20,
+    lineHeight: 26,
+    color: Colors.primaryContainer,
+    textAlign: 'center',
   },
 });
