@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: Spacing.stackMd,
+    paddingTop: Spacing.containerVerticalPadding,
   },
   carSummary: {
     backgroundColor: Colors.white,
@@ -600,8 +600,8 @@ const styles = StyleSheet.create({
   bottomBar: {
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.containerPadding,
-    paddingBottom: 32,
-    paddingTop: 16,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
+    paddingTop: Spacing.containerVerticalPadding,
     borderTopWidth: 1,
     borderTopColor: Colors.outlineVariant,
     flexDirection: 'row',

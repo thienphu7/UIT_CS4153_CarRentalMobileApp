@@ -167,11 +167,11 @@ export const ProfileScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  content: { paddingBottom: 32 },
+  content: { paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd },
   profileHeader: {
     backgroundColor: Colors.primaryContainer,
-    paddingTop: 60,
-    paddingBottom: 32,
+    paddingTop: Spacing.containerVerticalPadding * 3,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
     alignItems: 'center',
     gap: 8,
   },

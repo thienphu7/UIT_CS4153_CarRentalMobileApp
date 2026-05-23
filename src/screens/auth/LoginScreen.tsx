@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 80,
-    paddingBottom: 40,
+    paddingTop: Spacing.containerVerticalPadding * 4,
+    paddingBottom: Spacing.containerVerticalPadding * 2,
   },
   header: {
     marginBottom: Spacing.sectionMargin,

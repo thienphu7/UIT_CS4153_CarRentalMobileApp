@@ -38,8 +38,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 56,
-    paddingBottom: 14,
+    paddingTop: Spacing.containerVerticalPadding * 3,
+    paddingBottom: Spacing.containerVerticalPadding / 2,
     backgroundColor: Colors.background,
     flexDirection: 'row',
     alignItems: 'center',

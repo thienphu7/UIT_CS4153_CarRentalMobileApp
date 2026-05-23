@@ -149,7 +149,7 @@ export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, ro
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  scrollContent: { paddingBottom: 8 },
+  scrollContent: { paddingBottom: Spacing.containerVerticalPadding / 2 },
   heroFrame: {
     backgroundColor: Colors.background,
     paddingHorizontal: Spacing.containerPadding,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   heroFallback: { backgroundColor: Colors.surfaceContainerHigh, alignItems: 'center', justifyContent: 'center' },
-  content: { paddingHorizontal: Spacing.containerPadding, paddingTop: 20 },
+  content: { paddingHorizontal: Spacing.containerPadding, paddingTop: Spacing.containerVerticalPadding },
   titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -258,8 +258,8 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.containerPadding,
-    paddingBottom: 32,
-    paddingTop: 16,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
+    paddingTop: Spacing.containerVerticalPadding,
     flexDirection: 'row',
     alignItems: 'center',
     borderTopWidth: 1,

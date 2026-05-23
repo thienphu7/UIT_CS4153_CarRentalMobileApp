@@ -452,8 +452,8 @@ const styles = StyleSheet.create({
   searchHeader: {
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 42,
-    paddingBottom: 10,
+    paddingTop: Spacing.containerVerticalPadding * 2,
+    paddingBottom: Spacing.containerVerticalPadding / 2,
     borderBottomWidth: 1,
     borderBottomColor: Colors.outlineVariant,
   },
@@ -563,8 +563,8 @@ const styles = StyleSheet.create({
   results: { flex: 1 },
   resultsContent: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: Spacing.stackMd,
-    paddingBottom: 32,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
   },
   modalOverlay: {
     flex: 1,
@@ -614,8 +614,8 @@ const styles = StyleSheet.create({
   },
   sheetContent: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 18,
-    paddingBottom: 20,
+    paddingTop: Spacing.containerVerticalPadding,
+    paddingBottom: Spacing.containerVerticalPadding,
   },
   filterSection: {
     marginBottom: 24,
@@ -761,8 +761,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 14,
-    paddingBottom: 28,
+    paddingTop: Spacing.containerVerticalPadding / 2,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.sm,
   },
   clearFilterButton: {
     flex: 1,

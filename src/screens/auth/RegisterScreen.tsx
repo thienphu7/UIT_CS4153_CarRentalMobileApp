@@ -41,6 +41,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
       fullName: '',
       phone: '',
       address: '',
+      identityNum: '',
       driverLicense: '',
       dateOfBirth: null,
     },
@@ -53,6 +54,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
       fullName: data.fullName.trim(),
       phone: data.phone.trim(),
       address: data.address.trim(),
+      identityNum: data.identityNum.trim(),
       driverLicense: data.driverLicense.trim(),
       dateOfBirth: data.dateOfBirth?.trim() || null,
     };
@@ -177,6 +179,28 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation, rout
 
         <Controller
           control={control}
+          name="identityNum"
+          rules={{
+            required: 'Số CCCD không được để trống',
+            pattern: {
+              value: /^\d{9,12}$/,
+              message: 'Số CCCD/CMND phải gồm 9 đến 12 chữ số',
+            },
+          }}
+          render={({ field: { onChange, value } }) => (
+            <Input
+              label="Số CCCD"
+              placeholder="012345678901"
+              keyboardType="number-pad"
+              value={value}
+              onChangeText={onChange}
+              error={errors.identityNum?.message}
+            />
+          )}
+        />
+
+        <Controller
+          control={control}
           name="driverLicense"
           rules={{ required: 'Số bằng lái không được để trống' }}
           render={({ field: { onChange, value } }) => (
@@ -235,8 +259,8 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 60,
-    paddingBottom: 40,
+    paddingTop: Spacing.containerVerticalPadding * 3,
+    paddingBottom: Spacing.containerVerticalPadding * 2,
   },
   header: { marginBottom: Spacing.sectionMargin },
   title: {

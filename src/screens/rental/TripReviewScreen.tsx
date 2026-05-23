@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 40,
+    paddingTop: Spacing.containerVerticalPadding * 2,
   },
   iconWrapper: {
     alignSelf: 'center',

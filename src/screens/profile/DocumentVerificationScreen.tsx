@@ -55,7 +55,7 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
   route,
 }) => {
   const { email } = useAuthStore();
-  const { getProfile, saveProfile, restoreProfiles } = useProfileStore();
+  const { getProfile, saveProfile, restoreProfiles, syncCurrentCustomer } = useProfileStore();
   const savedProfile = getProfile(email);
   const [fullName, setFullName] = useState(savedProfile.fullName ?? '');
   const [phoneNumber, setPhoneNumber] = useState(savedProfile.phoneNumber ?? '');
@@ -75,8 +75,13 @@ export const DocumentVerificationScreen: React.FC<DocumentVerificationScreenProp
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    restoreProfiles();
-  }, [restoreProfiles]);
+    const loadProfile = async () => {
+      await restoreProfiles();
+      await syncCurrentCustomer(email);
+    };
+
+    loadProfile();
+  }, [email, restoreProfiles, syncCurrentCustomer]);
 
   useEffect(() => {
     setFullName(savedProfile.fullName ?? '');
@@ -312,7 +317,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
   content: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: Spacing.stackMd,
+    paddingTop: Spacing.containerVerticalPadding,
   },
   statusCard: {
     backgroundColor: Colors.white,
@@ -492,8 +497,8 @@ const styles = StyleSheet.create({
   bottomBar: {
     backgroundColor: Colors.white,
     paddingHorizontal: Spacing.containerPadding,
-    paddingBottom: 32,
-    paddingTop: 16,
+    paddingBottom: Spacing.containerVerticalPadding + Spacing.stackMd,
+    paddingTop: Spacing.containerVerticalPadding,
     borderTopWidth: 1,
     borderTopColor: Colors.outlineVariant,
     ...Shadow.bottomNav,

@@ -8,6 +8,7 @@ export interface RegisterPayload {
   fullName: string;
   phone: string;
   address: string;
+  identityNum: string;
   driverLicense: string;
   dateOfBirth?: string | null;
 }
@@ -27,6 +28,7 @@ export interface RegisterResponse {
   fullName: string;
   phone: string;
   address: string;
+  identityNum: string;
   driverLicense: string;
 }
 
