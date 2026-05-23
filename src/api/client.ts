@@ -40,12 +40,14 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    if (status === 401 || status === 403) {
       await Promise.all([
         SecureStore.deleteItemAsync(STORAGE_KEYS.accessToken),
         SecureStore.deleteItemAsync(STORAGE_KEYS.userEmail),
         SecureStore.deleteItemAsync(STORAGE_KEYS.userRole),
       ]);
+      handleAuthError(status);
       notifyAuthExpired();
     }
     return Promise.reject(error);

@@ -42,8 +42,9 @@ const MenuItem = ({
 export const ProfileScreen: React.FC = () => {
   const { email, isAuthenticated, logout } = useAuthStore();
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const profile = useProfileStore((state) => state.getProfile(email));
   const isVerificationComplete = useProfileStore((state) => state.isVerificationComplete(email));
-  const displayName = getDisplayNameFromEmail(email) || 'Người dùng';
+  const displayName = profile.fullName?.trim() || getDisplayNameFromEmail(email) || 'Người dùng';
 
   const handleLogout = () => {
     Alert.alert(
@@ -128,7 +129,7 @@ export const ProfileScreen: React.FC = () => {
         <MenuItem
           icon="car-outline"
           label="Lịch sử thuê xe"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('HomeTabs', { screen: 'Rentals' })}
         />
         <MenuItem
           icon="notifications-outline"

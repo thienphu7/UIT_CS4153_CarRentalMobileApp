@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, Alert } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 import { useProfileStore } from '../store/profileStore';
 import { useTermsStore } from '../store/termsStore';
@@ -8,7 +8,6 @@ import { subscribeAuthExpired } from '../store/authEvents';
 import { MainNavigator } from './MainNavigator';
 import { AdminNavigator } from './AdminNavigator';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
-import { useToast } from '../components/common/Toast';
 import { Colors } from '../theme/colors';
 import { FontFamilies, FontSizes } from '../theme/typography';
 import { Radius, Shadow, Spacing } from '../theme/spacing';
@@ -20,7 +19,6 @@ export const AppNavigator: React.FC = () => {
   const isDocumentImagesComplete = useProfileStore((state) => state.isDocumentImagesComplete(email));
   const isProfileLoading = useProfileStore((state) => state.isLoading);
   const restoreTermsAcceptances = useTermsStore((state) => state.restoreTermsAcceptances);
-  const { showToast } = useToast();
   const [showDocumentReminder, setShowDocumentReminder] = useState(false);
   const [hasDismissedDocumentReminder, setHasDismissedDocumentReminder] = useState(false);
   const navigationRef = React.useRef<any>(null);
@@ -32,11 +30,15 @@ export const AppNavigator: React.FC = () => {
   }, [restoreProfiles, restoreTermsAcceptances, restoreToken]);
 
   useEffect(() => {
-    return subscribeAuthExpired(() => {
+    const unsubscribeAuthExpired = subscribeAuthExpired(() => {
       logout();
-      showToast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'error');
+      Alert.alert('Phiên đăng nhập hết hạn', 'Vui lòng đăng nhập lại để tiếp tục.');
     });
-  }, [logout, showToast]);
+
+    return () => {
+      unsubscribeAuthExpired();
+    };
+  }, [logout]);
 
   useEffect(() => {
     if (isAuthenticated && role === 'CUSTOMER' && !isProfileLoading) {

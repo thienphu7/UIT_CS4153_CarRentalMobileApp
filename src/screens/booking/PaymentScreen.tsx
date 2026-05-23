@@ -27,7 +27,14 @@ import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius, Shadow } from '../../theme/spacing';
 import { formatVND, formatPricePerHour } from '../../utils/formatCurrency';
-import { formatDateTimeVN, toISOString, calcTotalAmount } from '../../utils/dateUtils';
+import {
+  addMinimumRentalDuration,
+  calcTotalAmount,
+  formatDateTimeVN,
+  hasMinimumRentalDuration,
+  MIN_RENTAL_DURATION_HOURS,
+  toISOString,
+} from '../../utils/dateUtils';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { saveRentalLocationsLocally } from '../../utils/localRentalOverrides';
 
@@ -38,18 +45,31 @@ type PaymentScreenProps = {
   route: RouteProp<MainStackParamList, 'Payment'>;
 };
 
+const getOptionalDate = (value: string | undefined) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const normalizeDropOffAt = (pickUpAt: Date, dropOffAt: Date) =>
+  hasMinimumRentalDuration(pickUpAt, dropOffAt) ? dropOffAt : addMinimumRentalDuration(pickUpAt);
+
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route }) => {
-  const { carId } = route.params;
+  const { carId, location } = route.params;
   const { selectedCar, fetchCarById } = useCarStore();
   const { email, isAuthenticated } = useAuthStore();
   const isVerificationComplete = useProfileStore((state) => state.isVerificationComplete(email));
   const [isLoading, setIsLoading] = useState(false);
 
   // Form state
-  const [pickUpAt, setPickUpAt] = useState(new Date());
-  const [dropOffAt, setDropOffAt] = useState(new Date(Date.now() + 24 * 60 * 60 * 1000));
-  const [pickUpLocation, setPickUpLocation] = useState('');
-  const [dropOffLocation, setDropOffLocation] = useState('');
+  const initialPickUpAt = getOptionalDate(route.params.pickUpAt);
+  const initialDropOffAt = initialPickUpAt
+    ? normalizeDropOffAt(initialPickUpAt, getOptionalDate(route.params.dropOffAt) ?? addMinimumRentalDuration(initialPickUpAt))
+    : null;
+  const [pickUpAt, setPickUpAt] = useState(initialPickUpAt);
+  const [dropOffAt, setDropOffAt] = useState(initialDropOffAt);
+  const [pickUpLocation, setPickUpLocation] = useState(location ?? '');
+  const [dropOffLocation, setDropOffLocation] = useState(location ?? '');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank' | 'wallet' | 'cash'>('bank');
   const [cardHolder, setCardHolder] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -59,6 +79,25 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
   const [showPickUp, setShowPickUp] = useState(false);
   const [showDropOff, setShowDropOff] = useState(false);
 
+  const rentalTimeParams = pickUpAt && dropOffAt
+    ? { pickUpAt: toISOString(pickUpAt), dropOffAt: toISOString(dropOffAt) }
+    : {};
+
+  useEffect(() => {
+    const nextPickUpAt = getOptionalDate(route.params.pickUpAt);
+    const nextDropOffAt = nextPickUpAt
+      ? normalizeDropOffAt(nextPickUpAt, getOptionalDate(route.params.dropOffAt) ?? addMinimumRentalDuration(nextPickUpAt))
+      : null;
+
+    setPickUpAt(nextPickUpAt);
+    setDropOffAt(nextDropOffAt);
+
+    if (location) {
+      setPickUpLocation((current) => current.trim() || location);
+      setDropOffLocation((current) => current.trim() || location);
+    }
+  }, [route.params.pickUpAt, route.params.dropOffAt, location]);
+
   useEffect(() => {
     if (!selectedCar || selectedCar.id !== carId) {
       fetchCarById(carId);
@@ -67,17 +106,27 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigation.replace('Login', { redirectTo: 'Payment', carId });
+      navigation.replace('Login', {
+        redirectTo: 'Payment',
+        carId,
+        location,
+        ...rentalTimeParams,
+      });
       return;
     }
 
     if (!isVerificationComplete) {
-      navigation.replace('DocumentVerification', { redirectTo: 'Payment', carId });
+      navigation.replace('DocumentVerification', {
+        redirectTo: 'Payment',
+        carId,
+        location,
+        ...rentalTimeParams,
+      });
     }
-  }, [carId, isAuthenticated, isVerificationComplete, navigation]);
+  }, [carId, isAuthenticated, isVerificationComplete, navigation, pickUpAt, dropOffAt, location]);
 
   const car = selectedCar;
-  const totalAmount = car
+  const totalAmount = car && pickUpAt && dropOffAt
     ? calcTotalAmount(car.pricePerHour, toISOString(pickUpAt), toISOString(dropOffAt))
     : 0;
 
@@ -113,9 +162,38 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
     });
   };
 
+  const updatePickUpAt = (date: Date) => {
+    setPickUpAt(date);
+    setDropOffAt((currentDropOffAt) =>
+      currentDropOffAt && hasMinimumRentalDuration(date, currentDropOffAt)
+        ? currentDropOffAt
+        : addMinimumRentalDuration(date)
+    );
+  };
+
+  const updateDropOffAt = (date: Date) => {
+    if (!pickUpAt) {
+      Alert.alert('Thiếu thời gian đón', 'Vui lòng chọn thời gian đón xe trước.');
+      return;
+    }
+
+    if (!hasMinimumRentalDuration(pickUpAt, date)) {
+      Alert.alert(
+        'Thời gian thuê quá ngắn',
+        `Thời gian thuê xe tối thiểu là ${MIN_RENTAL_DURATION_HOURS} giờ.`
+      );
+      setDropOffAt(addMinimumRentalDuration(pickUpAt));
+      return;
+    }
+
+    setDropOffAt(date);
+  };
+
   const openPickUpPicker = () => {
+    const pickerValue = pickUpAt ?? new Date();
+
     if (Platform.OS === 'android') {
-      openAndroidDateTimePicker(pickUpAt, new Date(), setPickUpAt);
+      openAndroidDateTimePicker(pickerValue, new Date(), updatePickUpAt);
       return;
     }
 
@@ -123,8 +201,16 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
   };
 
   const openDropOffPicker = () => {
+    if (!pickUpAt) {
+      Alert.alert('Thiếu thời gian đón', 'Vui lòng chọn thời gian đón xe trước.');
+      return;
+    }
+
+    const minimumDropOffAt = addMinimumRentalDuration(pickUpAt);
+    const pickerValue = dropOffAt ?? minimumDropOffAt;
+
     if (Platform.OS === 'android') {
-      openAndroidDateTimePicker(dropOffAt, pickUpAt, setDropOffAt);
+      openAndroidDateTimePicker(pickerValue, minimumDropOffAt, updateDropOffAt);
       return;
     }
 
@@ -133,7 +219,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
 
   const handleBook = async () => {
     if (!isAuthenticated) {
-      navigation.replace('Login', { redirectTo: 'Payment', carId });
+      navigation.replace('Login', {
+        redirectTo: 'Payment',
+        carId,
+        location,
+        ...rentalTimeParams,
+      });
       return;
     }
     if (!isVerificationComplete) {
@@ -144,7 +235,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
           {
             text: 'Xác thực ngay',
             onPress: () =>
-              navigation.replace('DocumentVerification', { redirectTo: 'Payment', carId }),
+              navigation.replace('DocumentVerification', {
+                redirectTo: 'Payment',
+                carId,
+                location,
+                ...rentalTimeParams,
+              }),
           },
         ]
       );
@@ -154,8 +250,15 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       Alert.alert('Thiếu thông tin', 'Vui lòng nhập địa điểm đón và trả xe');
       return;
     }
-    if (dropOffAt <= pickUpAt) {
-      Alert.alert('Thời gian không hợp lệ', 'Thời gian trả xe phải sau thời gian đón xe');
+    if (!pickUpAt || !dropOffAt) {
+      Alert.alert('Thiếu thời gian thuê', 'Vui lòng chọn thời gian đón và trả xe.');
+      return;
+    }
+    if (!hasMinimumRentalDuration(pickUpAt, dropOffAt)) {
+      Alert.alert(
+        'Thời gian không hợp lệ',
+        `Thời gian thuê xe tối thiểu là ${MIN_RENTAL_DURATION_HOURS} giờ.`
+      );
       return;
     }
     if (
@@ -222,20 +325,22 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
             <Ionicons name="calendar-outline" size={20} color={Colors.primaryContainer} />
             <View style={styles.datePickerText}>
               <Text style={styles.datePickerLabel}>Thời gian đón</Text>
-              <Text style={styles.datePickerValue}>{formatDateTimeVN(toISOString(pickUpAt))}</Text>
+              <Text style={[styles.datePickerValue, !pickUpAt && styles.datePickerPlaceholder]}>
+                {pickUpAt ? formatDateTimeVN(toISOString(pickUpAt)) : 'Chọn thời gian đón'}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={Colors.outline} />
           </TouchableOpacity>
 
           {Platform.OS !== 'android' && showPickUp && (
             <DateTimePicker
-              value={pickUpAt}
+              value={pickUpAt ?? new Date()}
               mode="datetime"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
               minimumDate={new Date()}
               onChange={(_, date) => {
                 setShowPickUp(false);
-                if (date) setPickUpAt(date);
+                if (date) updatePickUpAt(date);
               }}
             />
           )}
@@ -247,20 +352,22 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
             <Ionicons name="flag-outline" size={20} color={Colors.primaryContainer} />
             <View style={styles.datePickerText}>
               <Text style={styles.datePickerLabel}>Thời gian trả</Text>
-              <Text style={styles.datePickerValue}>{formatDateTimeVN(toISOString(dropOffAt))}</Text>
+              <Text style={[styles.datePickerValue, !dropOffAt && styles.datePickerPlaceholder]}>
+                {dropOffAt ? formatDateTimeVN(toISOString(dropOffAt)) : 'Chọn thời gian trả'}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={16} color={Colors.outline} />
           </TouchableOpacity>
 
-          {Platform.OS !== 'android' && showDropOff && (
+          {Platform.OS !== 'android' && showDropOff && pickUpAt && (
             <DateTimePicker
-              value={dropOffAt}
+              value={dropOffAt ?? addMinimumRentalDuration(pickUpAt)}
               mode="datetime"
               display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              minimumDate={pickUpAt}
+              minimumDate={addMinimumRentalDuration(pickUpAt)}
               onChange={(_, date) => {
                 setShowDropOff(false);
-                if (date) setDropOffAt(date);
+                if (date) updateDropOffAt(date);
               }}
             />
           )}
@@ -473,6 +580,10 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.bodyMain,
     color: Colors.onSurface,
     marginTop: 2,
+  },
+  datePickerPlaceholder: {
+    fontFamily: FontFamilies.sansRegular,
+    color: Colors.outline,
   },
   paymentMethods: {
     gap: 10,

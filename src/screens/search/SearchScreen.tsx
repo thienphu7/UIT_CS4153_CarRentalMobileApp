@@ -319,7 +319,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
           <ScreenState type="empty" icon="search-outline" title="Tìm xe phù hợp" message="Nhập hãng xe hoặc mẫu xe để bắt đầu." />
         )}
         {!isLoading && !error && cars.map((car) => (
-          <CarCard key={car.id} car={car} onPress={(item) => navigation.navigate('CarDetail', { carId: item.id })} />
+          <CarCard
+            key={car.id}
+            car={car}
+            onPress={(item) =>
+              navigation.navigate('CarDetail', {
+                carId: item.id,
+                location: quickSearchParams?.location,
+                pickUpAt: quickSearchParams?.pickUpAt,
+                dropOffAt: quickSearchParams?.dropOffAt,
+              })
+            }
+          />
         ))}
       </ScrollView>
 
@@ -390,7 +401,14 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
                     const selected = draftFilters.capacity === option.value;
                     return (
                       <TouchableOpacity key={option.value} style={[styles.segmentOption, selected && styles.optionActive]} onPress={() => setDraftFilters((current) => ({ ...current, capacity: selected ? null : (option.value as CapacityFilter) }))}>
-                        <Text style={[styles.segmentText, selected && styles.optionTextActive]}>{option.label}</Text>
+                        <Text
+                          style={[styles.segmentText, selected && styles.optionTextActive]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.82}
+                        >
+                          {option.label}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -418,13 +436,20 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ navigation, route })
                 <View style={styles.segmentRow}>
                   {[
                     { label: '< 500k', value: 'under500' },
-                    { label: '500k\n-\n2.500k', value: '500to2500' },
+                    { label: '500k - 2.500k', value: '500to2500' },
                     { label: '> 2.500k', value: 'over2500' },
                   ].map((option) => {
                     const selected = draftFilters.price === option.value;
                     return (
                       <TouchableOpacity key={option.value} style={[styles.segmentOption, selected && styles.optionActive]} onPress={() => setDraftFilters((current) => ({ ...current, price: selected ? null : (option.value as PriceFilter) }))}>
-                        <Text style={[styles.segmentText, selected && styles.optionTextActive]}>{option.label}</Text>
+                        <Text
+                          style={[styles.segmentText, selected && styles.optionTextActive]}
+                          numberOfLines={1}
+                          adjustsFontSizeToFit
+                          minimumFontScale={0.72}
+                        >
+                          {option.label}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -618,7 +643,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.containerVerticalPadding,
   },
   filterSection: {
-    marginBottom: 24,
+    marginBottom: 18,
   },
   filterSectionHeader: {
     flexDirection: 'row',
@@ -706,27 +731,32 @@ const styles = StyleSheet.create({
   },
   segmentRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   segmentOption: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 64,
     borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Colors.outlineVariant,
     backgroundColor: Colors.white,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
+    paddingTop: 16,
+    paddingBottom: 14,
+    overflow: 'visible',
   },
   segmentText: {
     flexShrink: 1,
     fontFamily: FontFamilies.sansRegular,
-    fontSize: FontSizes.bodyMain,
-    lineHeight: 11,
+    fontSize: FontSizes.labelSm,
+    lineHeight: 22,
     color: Colors.onSurfaceVariant,
     textAlign: 'center',
     textAlignVertical: 'center',
+    includeFontPadding: true,
+    width: '100%',
   },
   colorRow: {
     flexDirection: 'row',

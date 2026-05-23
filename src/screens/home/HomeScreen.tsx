@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useCarStore } from '../../store/carStore';
 import { useAuthStore } from '../../store/authStore';
+import { useProfileStore } from '../../store/profileStore';
 import { CarCard } from '../../components/common/CarCard';
 import { LoadingOverlay } from '../../components/common/LoadingOverlay';
 import { Car } from '../../api/car.api';
@@ -47,31 +48,34 @@ const formatQuickDate = (offsetDays: number) => {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { email } = useAuthStore();
+  const profile = useProfileStore((state) => state.getProfile(email));
   const { cars, isLoading, fetchCars } = useCarStore();
   const [selectedType, setSelectedType] = React.useState('Tất cả');
   const [refreshing, setRefreshing] = React.useState(false);
-  const displayName = getDisplayNameFromEmail(email);
+  const displayName = profile.fullName?.trim() || getDisplayNameFromEmail(email);
   const avatarLetter = (displayName || 'Bạn').charAt(0).toUpperCase();
   const greeting = getGreetingByHour();
   const pickUpDate = formatQuickDate(1);
   const dropOffDate = formatQuickDate(4);
-  const quickPickUpAt = React.useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    date.setHours(9, 0, 0, 0);
-    return date.toISOString();
-  }, []);
-  const quickDropOffAt = React.useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() + 4);
-    date.setHours(9, 0, 0, 0);
-    return date.toISOString();
-  }, []);
+  const getQuickRentalWindow = () => {
+    const pickUp = new Date();
+    pickUp.setDate(pickUp.getDate() + 1);
+    pickUp.setHours(9, 0, 0, 0);
+
+    const dropOff = new Date(pickUp);
+    dropOff.setDate(dropOff.getDate() + 3);
+
+    return {
+      pickUpAt: pickUp.toISOString(),
+      dropOffAt: dropOff.toISOString(),
+    };
+  };
   const openQuickRentalSearch = () => {
+    const rentalWindow = getQuickRentalWindow();
     navigation.navigate('QuickRentalSearch', {
       location: 'Hồ Chí Minh',
-      pickUpAt: quickPickUpAt,
-      dropOffAt: quickDropOffAt,
+      pickUpAt: rentalWindow.pickUpAt,
+      dropOffAt: rentalWindow.dropOffAt,
     });
   };
 
