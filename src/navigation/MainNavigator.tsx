@@ -7,10 +7,13 @@ import { Colors } from '../theme/colors';
 import { FontFamilies } from '../theme/typography';
 import { Heights } from '../theme/spacing';
 import { HomeScreen } from '../screens/home/HomeScreen';
+import { QuickRentalSearchScreen } from '../screens/home/QuickRentalSearchScreen';
 import { SearchScreen } from '../screens/search/SearchScreen';
 import { MyRentalsScreen } from '../screens/rental/MyRentalsScreen';
 import { MessagesScreen } from '../screens/messages/MessagesScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
+import { DocumentVerificationScreen } from '../screens/profile/DocumentVerificationScreen';
+import { TermsPolicyScreen } from '../screens/profile/TermsPolicyScreen';
 import { CarDetailScreen } from '../screens/car/CarDetailScreen';
 import { PaymentScreen } from '../screens/booking/PaymentScreen';
 import { BookingSuccessScreen } from '../screens/booking/BookingSuccessScreen';
@@ -20,7 +23,7 @@ import { RegisterScreen } from '../screens/auth/RegisterScreen';
 
 export type MainTabParamList = {
   Home: undefined;
-  Search: undefined;
+  Search: { location?: string; pickUpAt?: string; dropOffAt?: string } | undefined;
   Rentals: undefined;
   Messages: undefined;
   Profile: undefined;
@@ -28,8 +31,11 @@ export type MainTabParamList = {
 
 export type MainStackParamList = {
   HomeTabs: NavigatorScreenParams<MainTabParamList> | undefined;
+  QuickRentalSearch: { location?: string; pickUpAt?: string; dropOffAt?: string } | undefined;
   CarDetail: { carId: string };
   Payment: { carId: string };
+  DocumentVerification: { redirectTo?: 'Payment'; carId?: string } | undefined;
+  TermsPolicy: undefined;
   BookingSuccess: { rentalId: string };
   TripReview: { rentalId: string };
   Login: { redirectTo?: 'Payment'; carId?: string } | undefined;
@@ -89,7 +95,10 @@ export const MainNavigator: React.FC = () => (
     }}
   >
     <Stack.Screen name="HomeTabs" component={HomeTabs} options={{ headerShown: false }} />
+    <Stack.Screen name="QuickRentalSearch" component={QuickRentalSearchScreen} options={{ title: 'Thông tin thuê xe' }} />
     <Stack.Screen name="CarDetail" component={CarDetailScreen} options={{ title: 'Chi tiết xe' }} />
+    <Stack.Screen name="DocumentVerification" component={DocumentVerificationScreen} options={{ title: 'Xác thực giấy tờ' }} />
+    <Stack.Screen name="TermsPolicy" component={TermsPolicyScreen} options={{ title: 'Điều khoản & Chính sách' }} />
     <Stack.Screen name="Payment" component={PaymentScreen} options={{ title: 'Đặt xe' }} />
     <Stack.Screen name="BookingSuccess" component={BookingSuccessScreen} options={{ headerShown: false }} />
     <Stack.Screen name="TripReview" component={TripReviewScreen} options={{ title: 'Đánh giá chuyến đi' }} />

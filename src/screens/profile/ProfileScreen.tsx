@@ -8,7 +8,12 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuthStore } from '../../store/authStore';
+import { useProfileStore } from '../../store/profileStore';
+import { MainStackParamList } from '../../navigation/MainNavigator';
+import { Button } from '../../components/common/Button';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing, Radius, Shadow } from '../../theme/spacing';
@@ -35,7 +40,9 @@ const MenuItem = ({
 );
 
 export const ProfileScreen: React.FC = () => {
-  const { email, logout } = useAuthStore();
+  const { email, isAuthenticated, logout } = useAuthStore();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const isVerificationComplete = useProfileStore((state) => state.isVerificationComplete(email));
   const displayName = getDisplayNameFromEmail(email) || 'Người dùng';
 
   const handleLogout = () => {
@@ -51,6 +58,53 @@ export const ProfileScreen: React.FC = () => {
 
   // Extract first letter for avatar
   const avatarLetter = displayName[0].toUpperCase();
+
+  if (!isAuthenticated) {
+    return (
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={styles.profileHeader}>
+          <View style={styles.avatar}>
+            <Ionicons name="person-outline" size={38} color={Colors.onPrimary} />
+          </View>
+          <Text style={styles.name}>Tài khoản</Text>
+          <Text style={styles.role}>Đăng nhập để quản lý hồ sơ và đặt xe</Text>
+        </View>
+
+        <View style={[styles.authCard, Shadow.card]}>
+          <Text style={styles.authTitle}>Bạn chưa đăng nhập</Text>
+          <Text style={styles.authSubtitle}>
+            Đăng nhập hoặc tạo tài khoản để xác thực giấy tờ, theo dõi đơn thuê và thanh toán.
+          </Text>
+          <Button
+            title="Đăng nhập"
+            onPress={() => navigation.navigate('Login')}
+            style={styles.authButton}
+          />
+          <Button
+            title="Đăng ký"
+            variant="secondary"
+            onPress={() => navigation.navigate('Register')}
+          />
+        </View>
+
+        <View style={[styles.menuCard, Shadow.card]}>
+          <Text style={styles.sectionTitle}>Hỗ trợ</Text>
+          <MenuItem
+            icon="help-circle-outline"
+            label="Trung tâm hỗ trợ"
+            onPress={() => {}}
+          />
+          <MenuItem
+            icon="document-text-outline"
+            label="Điều khoản & Chính sách"
+            onPress={() => navigation.navigate('TermsPolicy')}
+          />
+        </View>
+
+        <Text style={styles.version}>Car Rental v1.0.0</Text>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -68,8 +122,8 @@ export const ProfileScreen: React.FC = () => {
         <Text style={styles.sectionTitle}>Tài khoản</Text>
         <MenuItem
           icon="person-outline"
-          label="Thông tin cá nhân"
-          onPress={() => {}}
+          label={isVerificationComplete ? 'Thông tin cá nhân đã xác thực' : 'Xác thực thông tin cá nhân'}
+          onPress={() => navigation.navigate('DocumentVerification')}
         />
         <MenuItem
           icon="car-outline"
@@ -93,7 +147,7 @@ export const ProfileScreen: React.FC = () => {
         <MenuItem
           icon="document-text-outline"
           label="Điều khoản & Chính sách"
-          onPress={() => {}}
+          onPress={() => navigation.navigate('TermsPolicy')}
         />
       </View>
 
@@ -151,6 +205,29 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.containerPadding,
     marginTop: Spacing.stackMd,
     overflow: 'hidden',
+  },
+  authCard: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.lg,
+    marginHorizontal: Spacing.containerPadding,
+    marginTop: Spacing.stackMd,
+    padding: 16,
+  },
+  authTitle: {
+    fontFamily: FontFamilies.sansSemiBold,
+    fontSize: FontSizes.h2Semibold,
+    color: Colors.onSurface,
+    marginBottom: 6,
+  },
+  authSubtitle: {
+    fontFamily: FontFamilies.sansRegular,
+    fontSize: FontSizes.bodyMain,
+    lineHeight: 20,
+    color: Colors.onSurfaceVariant,
+    marginBottom: 16,
+  },
+  authButton: {
+    marginBottom: 10,
   },
   sectionTitle: {
     fontFamily: FontFamilies.sansRegular,

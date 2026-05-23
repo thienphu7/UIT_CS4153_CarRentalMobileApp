@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import {
+  ImageBackground,
   View,
   Text,
   ScrollView,
@@ -8,6 +9,7 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useCarStore } from '../../store/carStore';
@@ -27,6 +29,21 @@ type HomeScreenProps = {
 const CAR_TYPES = ['Tất cả', 'SUV', 'Sedan', 'Hatchback', 'MPV', 'Pickup'];
 const HOME_CAR_LIMIT = 100;
 const FEATURED_CAR_COUNT = 3;
+const quickSearchBackground = require('../../../assets/home-blue-car.jpg');
+
+const getGreetingByHour = () => {
+  const hour = new Date().getHours();
+  if (hour < 11) return 'Chào buổi sáng';
+  if (hour < 13) return 'Chào buổi trưa';
+  if (hour < 18) return 'Chào buổi chiều';
+  return 'Chào buổi tối';
+};
+
+const formatQuickDate = (offsetDays: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  return `${date.getDate()} Tháng ${date.getMonth() + 1}`;
+};
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const { email } = useAuthStore();
@@ -34,6 +51,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const [selectedType, setSelectedType] = React.useState('Tất cả');
   const [refreshing, setRefreshing] = React.useState(false);
   const displayName = getDisplayNameFromEmail(email);
+  const avatarLetter = (displayName || 'Bạn').charAt(0).toUpperCase();
+  const greeting = getGreetingByHour();
+  const pickUpDate = formatQuickDate(1);
+  const dropOffDate = formatQuickDate(4);
+  const quickPickUpAt = React.useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    date.setHours(9, 0, 0, 0);
+    return date.toISOString();
+  }, []);
+  const quickDropOffAt = React.useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 4);
+    date.setHours(9, 0, 0, 0);
+    return date.toISOString();
+  }, []);
+  const openQuickRentalSearch = () => {
+    navigation.navigate('QuickRentalSearch', {
+      location: 'Hồ Chí Minh',
+      pickUpAt: quickPickUpAt,
+      dropOffAt: quickDropOffAt,
+    });
+  };
 
   useEffect(() => {
     fetchCars({ carStatus: 'AVAILABLE', limit: HOME_CAR_LIMIT });
@@ -78,11 +118,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     >
       {/* Header Greeting */}
       <View style={styles.header}>
-        <View style={styles.greetingBlock}>
-          <Text style={styles.greetingLabel}>Xin chào</Text>
-          <Text style={styles.greetingName} numberOfLines={1}>{displayName || 'Bạn'}</Text>
+        <View style={styles.topBar}>
+          <View style={styles.userRow}>
+            <View style={styles.avatar}>
+              {email ? (
+                <Text style={styles.avatarText}>{avatarLetter}</Text>
+              ) : (
+                <Ionicons name="person-outline" size={24} color={Colors.primaryContainer} />
+              )}
+            </View>
+            <View style={styles.greetingBlock}>
+              <Text style={styles.greetingLabel}>{greeting}</Text>
+              <Text style={styles.greetingName} numberOfLines={1}>{displayName || 'Bạn'}</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.notificationButton} activeOpacity={0.78}>
+            <Ionicons name="notifications-outline" size={24} color={Colors.onSurface} />
+            <View style={styles.notificationDot} />
+          </TouchableOpacity>
         </View>
-        <Text style={styles.headline}>Tìm xe ưng ý của bạn</Text>
+
+        <ImageBackground source={quickSearchBackground} style={styles.quickSearchCard} imageStyle={styles.quickSearchImage}>
+          <View style={styles.quickSearchOverlay} />
+          <Text style={styles.quickSearchTitle}>Bạn muốn thuê xe ở đâu?</Text>
+          <TouchableOpacity style={styles.locationField} onPress={openQuickRentalSearch} activeOpacity={0.82}>
+            <Ionicons name="location-outline" size={24} color={Colors.outline} />
+            <Text style={styles.locationText}>Hồ Chí Minh</Text>
+          </TouchableOpacity>
+          <View style={styles.dateRow}>
+            <TouchableOpacity style={styles.dateField} onPress={openQuickRentalSearch} activeOpacity={0.82}>
+              <Text style={styles.dateLabel}>Nhận xe</Text>
+              <Text style={styles.dateValue}>{pickUpDate}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.dateField} onPress={openQuickRentalSearch} activeOpacity={0.82}>
+              <Text style={styles.dateLabel}>Trả xe</Text>
+              <Text style={styles.dateValue}>{dropOffDate}</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={styles.quickSearchButton} onPress={openQuickRentalSearch} activeOpacity={0.86}>
+            <Text style={styles.quickSearchButtonText}>Tìm xe ngay</Text>
+          </TouchableOpacity>
+        </ImageBackground>
       </View>
 
       {/* Featured — Horizontal Scroll */}
@@ -146,30 +222,142 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 32 },
   header: {
     paddingHorizontal: Spacing.containerPadding,
-    paddingTop: 60,
-    paddingBottom: Spacing.sectionMargin,
+    paddingTop: 38,
+    paddingBottom: 12,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  userRow: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.primaryFixed,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontFamily: FontFamilies.sansBold,
+    fontSize: 19,
+    color: Colors.primaryContainer,
   },
   greetingBlock: {
-    marginBottom: 14,
+    flex: 1,
+    minWidth: 0,
   },
   greetingLabel: {
     fontFamily: FontFamilies.sansRegular,
     fontSize: FontSizes.labelSm,
+    lineHeight: 16,
     color: Colors.onSurfaceVariant,
-    textTransform: 'uppercase',
   },
   greetingName: {
     fontFamily: FontFamilies.sansSemiBold,
     fontSize: 18,
     lineHeight: 24,
-    color: Colors.primaryContainer,
-    marginTop: 2,
-  },
-  headline: {
-    fontFamily: FontFamilies.displayBold,
-    fontSize: FontSizes.h1Display,
     color: Colors.onSurface,
-    lineHeight: 34,
+  },
+  notificationButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.surfaceContainerLow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 12,
+  },
+  notificationDot: {
+    position: 'absolute',
+    right: 12,
+    top: 11,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: Colors.error,
+  },
+  quickSearchCard: {
+    borderRadius: Radius.xl,
+    overflow: 'hidden',
+    padding: 14,
+    minHeight: 206,
+    justifyContent: 'flex-end',
+    backgroundColor: Colors.primaryContainer,
+  },
+  quickSearchImage: {
+    borderRadius: Radius.xl,
+  },
+  quickSearchOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(13, 82, 216, 0.74)',
+  },
+  quickSearchTitle: {
+    fontFamily: FontFamilies.sansBold,
+    fontSize: 21,
+    lineHeight: 25,
+    color: Colors.onPrimary,
+    marginBottom: 8,
+  },
+  locationField: {
+    height: 44,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.white,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  locationText: {
+    fontFamily: FontFamilies.sansSemiBold,
+    fontSize: FontSizes.bodySemibold,
+    color: Colors.onSurfaceVariant,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 10,
+  },
+  dateField: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: Radius.lg,
+    backgroundColor: Colors.white,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  dateLabel: {
+    fontFamily: FontFamilies.sansSemiBold,
+    fontSize: FontSizes.bodySemibold,
+    color: Colors.outline,
+    marginBottom: 1,
+  },
+  dateValue: {
+    fontFamily: FontFamilies.sansBold,
+    fontSize: 15,
+    lineHeight: 19,
+    color: Colors.onSurface,
+  },
+  quickSearchButton: {
+    height: 42,
+    borderRadius: Radius.lg,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickSearchButtonText: {
+    fontFamily: FontFamilies.sansBold,
+    fontSize: 16,
+    color: Colors.primaryContainer,
   },
   section: {
     marginBottom: Spacing.sectionMargin,

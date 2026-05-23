@@ -13,6 +13,7 @@ import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useAuthStore } from '../../store/authStore';
+import { useProfileStore } from '../../store/profileStore';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Colors } from '../../theme/colors';
@@ -47,7 +48,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) =
       await login({ email, password });
       const redirectParams = route.params;
       if (redirectParams?.redirectTo === 'Payment' && redirectParams.carId) {
-        navigation.replace('Payment', { carId: redirectParams.carId });
+        const normalizedEmail = email.trim();
+        const isVerificationComplete = useProfileStore
+          .getState()
+          .isVerificationComplete(normalizedEmail);
+
+        if (isVerificationComplete) {
+          navigation.replace('Payment', { carId: redirectParams.carId });
+        } else {
+          navigation.replace('DocumentVerification', {
+            redirectTo: 'Payment',
+            carId: redirectParams.carId,
+          });
+        }
         return;
       }
 

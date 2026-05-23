@@ -12,6 +12,8 @@ import { RouteProp } from '@react-navigation/native';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 import { useCarStore } from '../../store/carStore';
 import { useAuthStore } from '../../store/authStore';
+import { useProfileStore } from '../../store/profileStore';
+import { BookingStepIndicator } from '../../components/booking/BookingStepIndicator';
 import { LoadingOverlay } from '../../components/common/LoadingOverlay';
 import { Button } from '../../components/common/Button';
 import { Colors } from '../../theme/colors';
@@ -39,7 +41,8 @@ const SpecItem = ({ icon, label, value }: { icon: string; label: string; value: 
 export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, route }) => {
   const { carId } = route.params;
   const { selectedCar, isLoading, fetchCarById } = useCarStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, email } = useAuthStore();
+  const isVerificationComplete = useProfileStore((state) => state.isVerificationComplete(email));
 
   useEffect(() => {
     fetchCarById(carId);
@@ -53,6 +56,11 @@ export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, ro
   const handleBookNow = () => {
     if (!isAuthenticated) {
       navigation.navigate('Login', { redirectTo: 'Payment', carId: car.id });
+      return;
+    }
+
+    if (!isVerificationComplete) {
+      navigation.navigate('DocumentVerification', { redirectTo: 'Payment', carId: car.id });
       return;
     }
 
@@ -75,6 +83,8 @@ export const CarDetailScreen: React.FC<CarDetailScreenProps> = ({ navigation, ro
 
         {/* Main Info */}
         <View style={styles.content}>
+          <BookingStepIndicator currentStep={1} />
+
           {/* Title & Price */}
           <View style={styles.titleRow}>
             <View style={styles.titleLeft}>
