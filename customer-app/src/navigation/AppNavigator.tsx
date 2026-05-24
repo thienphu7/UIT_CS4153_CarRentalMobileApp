@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, View, Alert } from 'react-native';
 import { useAuthStore } from '../store/authStore';
@@ -6,7 +6,6 @@ import { useProfileStore } from '../store/profileStore';
 import { useTermsStore } from '../store/termsStore';
 import { subscribeAuthExpired } from '../store/authEvents';
 import { MainNavigator } from './MainNavigator';
-import { AdminNavigator } from './AdminNavigator';
 import { LoadingOverlay } from '../components/common/LoadingOverlay';
 import { Colors } from '../theme/colors';
 import { FontFamilies, FontSizes } from '../theme/typography';
@@ -21,7 +20,8 @@ export const AppNavigator: React.FC = () => {
   const restoreTermsAcceptances = useTermsStore((state) => state.restoreTermsAcceptances);
   const [showDocumentReminder, setShowDocumentReminder] = useState(false);
   const [hasDismissedDocumentReminder, setHasDismissedDocumentReminder] = useState(false);
-  const navigationRef = React.useRef<any>(null);
+  const navigationRef = useRef<any>(null);
+  const authExpiredAlertVisible = useRef(false);
 
   useEffect(() => {
     restoreToken();
@@ -31,8 +31,26 @@ export const AppNavigator: React.FC = () => {
 
   useEffect(() => {
     const unsubscribeAuthExpired = subscribeAuthExpired(() => {
-      logout();
-      Alert.alert('Phiên đăng nhập hết hạn', 'Vui lòng đăng nhập lại để tiếp tục.');
+      if (authExpiredAlertVisible.current) return;
+      authExpiredAlertVisible.current = true;
+      Alert.alert(
+        'Phiên đăng nhập đã hết hạn',
+        'Vui lòng đăng nhập lại để tiếp tục.',
+        [
+          {
+            text: 'OK',
+            onPress: async () => {
+              await logout();
+              authExpiredAlertVisible.current = false;
+              navigationRef.current?.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            },
+          },
+        ],
+        { cancelable: false }
+      );
     });
 
     return () => {
@@ -78,9 +96,7 @@ export const AppNavigator: React.FC = () => {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      {isAuthenticated && role === 'EMPLOYEE' ? <AdminNavigator /> : <MainNavigator />}
-      {/* Test customer screen without login: <MainNavigator /> */}
-      {/* Test admin screen without login: <AdminNavigator /> */}
+      <MainNavigator />
       <Modal
         transparent
         visible={showDocumentReminder}
