@@ -28,6 +28,11 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
+const isAuthRequest = (url?: string) => {
+  if (!url) return false;
+  return url.includes('/auth/login') || url.includes('/auth/register');
+};
+
 apiClient.interceptors.request.use(
   async (config) => {
     const token = await SecureStore.getItemAsync(STORAGE_KEYS.accessToken);
@@ -41,13 +46,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error.response?.status;
-    if (status === 401 || status === 403) {
+    if ((status === 401 || status === 403) && !isAuthRequest(error.config?.url)) {
       await Promise.all([
         SecureStore.deleteItemAsync(STORAGE_KEYS.accessToken),
         SecureStore.deleteItemAsync(STORAGE_KEYS.userEmail),
         SecureStore.deleteItemAsync(STORAGE_KEYS.userRole),
       ]);
-      handleAuthError(status);
       notifyAuthExpired();
     }
     return Promise.reject(error);

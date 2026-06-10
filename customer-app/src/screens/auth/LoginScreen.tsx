@@ -19,7 +19,6 @@ import { Input } from '../../components/common/Input';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Spacing } from '../../theme/spacing';
-import { getApiErrorMessage } from '../../utils/apiError';
 
 type LoginScreenProps = {
   navigation: NativeStackNavigationProp<MainStackParamList, 'Login'>;
@@ -73,11 +72,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation, route }) =
       }
 
       navigation.navigate('HomeTabs');
-    } catch (e: any) {
-      Alert.alert(
-        'Đăng nhập thất bại',
-        getApiErrorMessage(e, 'Sai email hoặc mật khẩu')
-      );
+    } catch {
+      Alert.alert('Đăng nhập thất bại', 'Vui lòng kiểm tra email hoặc mật khẩu.');
     }
   };
 
