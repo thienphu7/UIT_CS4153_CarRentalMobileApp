@@ -25,7 +25,7 @@ import { useToast } from '../../components/common/Toast';
 import { Colors } from '../../theme/colors';
 import { FontFamilies, FontSizes } from '../../theme/typography';
 import { Radius, Shadow, Spacing } from '../../theme/spacing';
-import { formatPricePerHour } from '../../utils/formatCurrency';
+import { formatPricePerHour, getHourlyPriceFromDaily } from '../../utils/formatCurrency';
 import { getApiErrorMessage } from '../../utils/apiError';
 
 const createEmptyForm = (): CreateCarPayload => ({
@@ -139,7 +139,7 @@ export const AdminCarsScreen: React.FC = () => {
       color: car.color,
       licensePlate: car.licensePlate,
       manufactureYear: car.manufactureYear,
-      pricePerHour: car.pricePerHour,
+      pricePerHour: getHourlyPriceFromDaily(car.pricePerHour),
       capacity: car.capacity,
       mileage: car.mileage,
       status: car.status,
@@ -176,8 +176,9 @@ export const AdminCarsScreen: React.FC = () => {
     if (!validateForm()) return;
     setSaving(true);
     try {
-      if (editingCar) await carApi.updateCar(editingCar.id, form);
-      else await carApi.createCar(form);
+      const apiPayload = { ...form, pricePerHour: form.pricePerHour * 24 };
+      if (editingCar) await carApi.updateCar(editingCar.id, apiPayload);
+      else await carApi.createCar(apiPayload);
       showToast(editingCar ? 'Đã cập nhật xe.' : 'Đã tạo xe mới.', 'success');
       setModalVisible(false);
       setEditingCar(null);

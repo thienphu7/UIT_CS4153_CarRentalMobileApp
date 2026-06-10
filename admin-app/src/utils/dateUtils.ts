@@ -1,3 +1,5 @@
+import { getHourlyPriceFromDaily } from './formatCurrency';
+
 export const MIN_RENTAL_DURATION_HOURS = 2;
 export const MIN_RENTAL_DURATION_MS = MIN_RENTAL_DURATION_HOURS * 60 * 60 * 1000;
 
@@ -56,10 +58,10 @@ export const hasMinimumRentalDuration = (pickUpAt: Date, dropOffAt: Date): boole
  * Calculate total rental amount
  */
 export const calcTotalAmount = (
-  pricePerHour: number,
+  pricePerDay: number,
   pickUpAt: string,
   dropOffAt: string
 ): number => {
   const hours = calcHours(pickUpAt, dropOffAt);
-  return pricePerHour * hours;
+  return getHourlyPriceFromDaily(pricePerDay) * hours;
 };
